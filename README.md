@@ -7,13 +7,14 @@
 - 라이선스: Basic(무료)
 - 임베딩: DJL + `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (오픈 모델)
 - 검색: Elasticsearch `dense_vector` + `knn` 쿼리
-- 데이터: `src/main/resources/data/food-products.json` (300건)
+- 데이터: `src/main/resources/data/food-products.json` (120건)
 
 ## 빠른 시작
-1. `./shell/install-elasticsearch.sh`
-2. `./shell/run-elasticsearch.sh`
-3. `./shell/check-elasticsearch.sh`
-4. `kubectl port-forward -n ai-search service/ai-search-es-es-http 9200:9200`
-5. ES 비밀번호 export 후 `./gradlew test`
+1. `./sh_bin/00_2_install_eck_operator.sh` (1회성)
+2. `./sh_bin/00_3_start_elasticsearch_cluster.sh` (초기/재구성 시)
+3. `./sh_bin/00_4_prepare_djl_truststore.sh` (1회성)
+4. `./sh_bin/01_check_elasticsearch_status.sh`
+5. `./sh_bin/02_generate_sample_data.sh`
+6. `./sh_bin/04_run_vector_search_test_local.sh`
 
-상세 절차는 `shell/readme.md` 참고.
+상세 절차는 `sh_bin/readme.md` 참고.

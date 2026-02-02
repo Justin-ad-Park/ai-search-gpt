@@ -49,9 +49,12 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(2)
     void semanticSearchShouldReturnRelevantProducts() {
-        List<SearchHitResult> results = vectorIndexService.search("아이들 간식으로 좋은 과일칩", 5);
+        String query = "어린이가 먹을 만한 전통 스낵";
+        //query = "태풍";
 
-        System.out.println("[SEARCH] query=아이들 간식으로 좋은 과일칩");
+        List<SearchHitResult> results = vectorIndexService.search(query, 5);
+
+        System.out.println("[SEARCH] query=" + query);
         for (int i = 0; i < results.size(); i++) {
             SearchHitResult hit = results.get(i);
             System.out.println("rank=" + (i + 1)
