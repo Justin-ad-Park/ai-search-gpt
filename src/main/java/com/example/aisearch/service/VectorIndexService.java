@@ -19,6 +19,8 @@ import java.util.Map;
 @Service
 public class VectorIndexService {
 
+    private static final double MIN_SCORE_THRESHOLD = 0.74d;
+
     private final ElasticsearchClient client;
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
@@ -136,7 +138,9 @@ public class VectorIndexService {
                 String id = hit.id();
                 Double score = hit.score();
                 Map<String, Object> source = hit.source();
-                results.add(new SearchHitResult(id, score, source));
+                if (score != null && score >= MIN_SCORE_THRESHOLD) {
+                    results.add(new SearchHitResult(id, score, source));
+                }
             });
             return results;
         } catch (IOException e) {

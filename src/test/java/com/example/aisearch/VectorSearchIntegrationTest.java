@@ -50,9 +50,41 @@ class VectorSearchIntegrationTest {
     @Order(2)
     void semanticSearchShouldReturnRelevantProducts() {
         String query = "어린이가 먹을 만한 전통 스낵";
-        //query = "태풍";
+        String[] expectedCategoryKeywords = {"간식", "청과"};
+
+        assertSemanticSearchContainsCategories(query, 5, expectedCategoryKeywords);
+    }
+
+    @Test
+    @Order(3)
+    void semanticSearchShouldReturnRelevantProducts2() {
+        String query = "바다 식품";
+        String[] expectedCategoryKeywords = {"수산물"};
+
+        assertSemanticSearchContainsCategories(query, 20, expectedCategoryKeywords);
+    }
+
+    @Test
+    @Order(4)
+    void semanticSearchShouldReturnEmptyWhenBelowThreshold() {
+        String query = "태풍";
 
         List<SearchHitResult> results = vectorIndexService.search(query, 5);
+
+        System.out.println("[SEARCH] query=" + query);
+        results.forEach(hit -> System.out.printf(
+                "rank=?, score=%s, id=%s, name=%s, category=%s%n",
+                hit.score(),
+                hit.id(),
+                hit.source().get("product_name"),
+                hit.source().get("category")
+        ));
+
+        Assertions.assertTrue(results.isEmpty(), "MIN_SCORE_THRESHOLD 이하이면 검색 결과가 없어야 합니다.");
+    }
+
+    private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
+        List<SearchHitResult> results = vectorIndexService.search(query, size);
 
         System.out.println("[SEARCH] query=" + query);
         for (int i = 0; i < results.size(); i++) {
@@ -71,10 +103,22 @@ class VectorSearchIntegrationTest {
                 hit.source().get("product_name"),
                 hit.score()
         ));
-        boolean containsSnackOrFruit = results.stream()
+        boolean containsExpectedCategory = results.stream()
                 .map(hit -> (String) hit.source().get("category"))
-                .anyMatch(category -> category.contains("간식") || category.contains("과일"));
-        Assertions.assertTrue(containsSnackOrFruit, "상위 결과에 간식/과일 관련 상품이 포함되어야 합니다.");
+                .anyMatch(category -> containsAnyKeyword(category, expectedCategoryKeywords));
+        Assertions.assertTrue(containsExpectedCategory, "상위 결과에 기대 카테고리가 포함되어야 합니다.");
+    }
+
+    private boolean containsAnyKeyword(String category, String... keywords) {
+        if (category == null) {
+            return false;
+        }
+        for (String keyword : keywords) {
+            if (category.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @AfterAll
