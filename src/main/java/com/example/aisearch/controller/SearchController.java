@@ -1,7 +1,7 @@
 package com.example.aisearch.controller;
 
 import com.example.aisearch.model.SearchHitResult;
-import com.example.aisearch.service.VectorIndexService;
+import com.example.aisearch.service.VectorSearchService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -17,10 +17,10 @@ import java.util.Map;
 @RestController
 public class SearchController {
 
-    private final VectorIndexService vectorIndexService;
+    private final VectorSearchService vectorSearchService;
 
-    public SearchController(VectorIndexService vectorIndexService) {
-        this.vectorIndexService = vectorIndexService;
+    public SearchController(VectorSearchService vectorSearchService) {
+        this.vectorSearchService = vectorSearchService;
     }
 
     @GetMapping("/api/search")
@@ -28,7 +28,7 @@ public class SearchController {
             @RequestParam("q") @NotBlank String query,
             @RequestParam(value = "size", defaultValue = "5") @Min(1) @Max(20) int size
     ) {
-        List<SearchHitResult> results = vectorIndexService.search(query, size);
+        List<SearchHitResult> results = vectorSearchService.search(query, size);
         return Map.of(
                 "query", query,
                 "size", size,

@@ -1,7 +1,9 @@
 package com.example.aisearch;
 
 import com.example.aisearch.model.SearchHitResult;
-import com.example.aisearch.service.VectorIndexService;
+import com.example.aisearch.service.IndexManagementService;
+import com.example.aisearch.service.ProductIndexingService;
+import com.example.aisearch.service.VectorSearchService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
@@ -35,13 +37,19 @@ class VectorSearchIntegrationTest {
     }
 
     @Autowired
-    private VectorIndexService vectorIndexService;
+    private IndexManagementService indexManagementService;
+
+    @Autowired
+    private ProductIndexingService productIndexingService;
+
+    @Autowired
+    private VectorSearchService vectorSearchService;
 
     @Test
     @Order(1)
     void reindexSampleData() {
-        vectorIndexService.recreateIndex();
-        long indexed = vectorIndexService.reindexSampleData();
+        indexManagementService.recreateIndex();
+        long indexed = productIndexingService.reindexSampleData();
         Assertions.assertTrue(indexed >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
         System.out.println("[INDEXED] total=" + indexed);
     }
@@ -69,7 +77,7 @@ class VectorSearchIntegrationTest {
     void semanticSearchShouldReturnEmptyWhenBelowThreshold() {
         String query = "태풍";
 
-        List<SearchHitResult> results = vectorIndexService.search(query, 5);
+        List<SearchHitResult> results = vectorSearchService.search(query, 5);
 
         System.out.println("[SEARCH] query=" + query);
         results.forEach(hit -> System.out.printf(
@@ -84,7 +92,7 @@ class VectorSearchIntegrationTest {
     }
 
     private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
-        List<SearchHitResult> results = vectorIndexService.search(query, size);
+        List<SearchHitResult> results = vectorSearchService.search(query, size);
 
         System.out.println("[SEARCH] query=" + query);
         for (int i = 0; i < results.size(); i++) {

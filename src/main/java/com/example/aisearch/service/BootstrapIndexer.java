@@ -12,16 +12,19 @@ public class BootstrapIndexer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(BootstrapIndexer.class);
 
-    private final VectorIndexService vectorIndexService;
+    private final IndexManagementService indexManagementService;
+    private final ProductIndexingService productIndexingService;
 
-    public BootstrapIndexer(VectorIndexService vectorIndexService) {
-        this.vectorIndexService = vectorIndexService;
+    public BootstrapIndexer(IndexManagementService indexManagementService,
+                            ProductIndexingService productIndexingService) {
+        this.indexManagementService = indexManagementService;
+        this.productIndexingService = productIndexingService;
     }
 
     @Override
     public void run(String... args) {
-        vectorIndexService.recreateIndex();
-        long count = vectorIndexService.reindexSampleData();
+        indexManagementService.recreateIndex();
+        long count = productIndexingService.reindexSampleData();
         log.info("Indexed {} documents into Elasticsearch", count);
     }
 }
