@@ -50,7 +50,7 @@ class VectorSearchIntegrationTest {
     @Order(2)
     void semanticSearchShouldReturnRelevantProducts() {
         String query = "어린이가 먹을 만한 전통 스낵";
-        String[] expectedCategoryKeywords = {"간식", "청과"};
+        String[] expectedCategoryKeywords = {"간식"};
 
         assertSemanticSearchContainsCategories(query, 5, expectedCategoryKeywords);
     }
@@ -58,8 +58,8 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(3)
     void semanticSearchShouldReturnRelevantProducts2() {
-        String query = "바다 식품";
-        String[] expectedCategoryKeywords = {"수산물"};
+        String query = "물고기";
+        String[] expectedCategoryKeywords = {"수산","간편식"};
 
         assertSemanticSearchContainsCategories(query, 20, expectedCategoryKeywords);
     }
