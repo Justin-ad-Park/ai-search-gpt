@@ -4,6 +4,7 @@ import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.service.IndexManagementService;
 import com.example.aisearch.service.ProductIndexingService;
 import com.example.aisearch.service.VectorSearchService;
+import com.example.aisearch.support.ElasticsearchDirectExecutionSetup;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
@@ -13,27 +14,16 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.List;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class VectorSearchIntegrationTest {
 
-    private static Process portForwardProcess;
+    private static final ElasticsearchDirectExecutionSetup.SetupResult SETUP_RESULT;
 
     static {
-        setupForDirectExecution();
+        SETUP_RESULT = ElasticsearchDirectExecutionSetup.setup();
     }
 
     @Autowired
@@ -131,103 +121,6 @@ class VectorSearchIntegrationTest {
 
     @AfterAll
     static void teardown() {
-        if (portForwardProcess != null && portForwardProcess.isAlive()) {
-            portForwardProcess.destroy();
-        }
-    }
-
-    private static void setupForDirectExecution() {
-        try {
-            trustAllHttpsForTestOnly();
-
-            setIfMissing("AI_SEARCH_ES_USERNAME", "elastic");
-
-            if (isBlank(System.getProperty("AI_SEARCH_ES_PASSWORD")) && isBlank(System.getenv("AI_SEARCH_ES_PASSWORD"))) {
-                String password = runCommand(
-                        "kubectl", "get", "secret", "ai-search-es-es-elastic-user",
-                        "-n", "ai-search", "-o", "go-template={{.data.elastic | base64decode}}"
-                ).trim();
-                setIfMissing("AI_SEARCH_ES_PASSWORD", password);
-            }
-
-            if (isBlank(System.getProperty("AI_SEARCH_ES_URL")) && isBlank(System.getenv("AI_SEARCH_ES_URL"))) {
-                String service = findElasticsearchHttpService();
-                portForwardProcess = new ProcessBuilder(
-                        "kubectl", "port-forward", "-n", "ai-search", "service/" + service, "9200:9200"
-                ).redirectErrorStream(true).start();
-                Thread.sleep(3000L);
-                setIfMissing("AI_SEARCH_ES_URL", "http://localhost:9200");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("VectorSearchIntegrationTest 사전 설정 실패", e);
-        }
-    }
-
-    private static String findElasticsearchHttpService() throws IOException, InterruptedException {
-        String output = runCommand(
-                "kubectl", "get", "svc", "-n", "ai-search",
-                "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"
-        );
-        for (String line : output.split("\\R")) {
-            if (line.endsWith("-es-http")) {
-                return line.trim();
-            }
-        }
-        return "ai-search-es-es-http";
-    }
-
-    private static void trustAllHttpsForTestOnly() throws Exception {
-        TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-        };
-
-        SSLContext sc = SSLContext.getInstance("TLS");
-        sc.init(null, trustAllCerts, new SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        });
-    }
-
-    private static void setIfMissing(String key, String value) {
-        if (isBlank(System.getProperty(key)) && isBlank(System.getenv(key))) {
-            System.setProperty(key, value);
-        }
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
-
-    private static String runCommand(String... command) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
-        StringBuilder out = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                out.append(line).append('\n');
-            }
-        }
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new IllegalStateException("command failed: " + String.join(" ", command) + "\n" + out);
-        }
-        return out.toString();
+        ElasticsearchDirectExecutionSetup.cleanup(SETUP_RESULT);
     }
 }

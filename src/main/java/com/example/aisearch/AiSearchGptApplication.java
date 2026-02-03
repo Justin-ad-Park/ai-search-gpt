@@ -4,6 +4,7 @@ import com.example.aisearch.config.AiSearchProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Primary;
 
 @SpringBootApplication
 @EnableConfigurationProperties(AiSearchProperties.class)

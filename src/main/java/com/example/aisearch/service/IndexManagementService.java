@@ -13,15 +13,18 @@ public class IndexManagementService {
     private final ElasticsearchClient client;
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
+    private final IndexSchemaBuilder indexSchemaBuilder;
 
     public IndexManagementService(
             ElasticsearchClient client,
             AiSearchProperties properties,
-            EmbeddingService embeddingService
+            EmbeddingService embeddingService,
+            IndexSchemaBuilder indexSchemaBuilder
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
+        this.indexSchemaBuilder = indexSchemaBuilder;
     }
 
     public void recreateIndex() {
@@ -32,28 +35,7 @@ public class IndexManagementService {
                 client.indices().delete(d -> d.index(indexName));
             }
 
-            String mapping = """
-                    {
-                      \"settings\": {
-                        \"number_of_shards\": 1,
-                        \"number_of_replicas\": 0
-                      },
-                      \"mappings\": {
-                        \"properties\": {
-                          \"id\": {\"type\": \"keyword\"},
-                          \"product_name\": {\"type\": \"text\"},
-                          \"category\": {\"type\": \"keyword\"},
-                          \"description\": {\"type\": \"text\"},
-                          \"product_vector\": {
-                            \"type\": \"dense_vector\",
-                            \"dims\": %d,
-                            \"index\": true,
-                            \"similarity\": \"cosine\"
-                          }
-                        }
-                      }
-                    }
-                    """.formatted(embeddingService.dimensions());
+            String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions());
 
             client.indices().create(c -> c
                     .index(indexName)

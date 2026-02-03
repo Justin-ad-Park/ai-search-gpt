@@ -1,6 +1,9 @@
 ai-search:
   elasticsearch-url: ${AI_SEARCH_ES_URL:http://localhost:9200}
   username: ${AI_SEARCH_ES_USERNAME:elastic}
-  password: ${AI_SEARCH_ES_PASSWORD:mHSD62AxK3c25Pr2nQGIXtDc}
+  password: ${AI_SEARCH_ES_PASSWORD:password}
   index-name: ${AI_SEARCH_ES_INDEX:food-products-v1-test}
   embedding-model-url: ${AI_SEARCH_EMBED_MODEL:djl://ai.djl.huggingface.pytorch/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
+  min-score-threshold: ${AI_SEARCH_MIN_SCORE:0.74}
+  num-candidates-multiplier: ${AI_SEARCH_NUM_CANDIDATES_MULTIPLIER:5}
+  num-candidates-min: ${AI_SEARCH_NUM_CANDIDATES_MIN:50}

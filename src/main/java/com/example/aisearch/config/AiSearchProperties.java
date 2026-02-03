@@ -10,6 +10,9 @@ public class AiSearchProperties {
     private String password;
     private String indexName;
     private String embeddingModelUrl;
+    private double minScoreThreshold;
+    private int numCandidatesMultiplier;
+    private int numCandidatesMin;
 
     public String getElasticsearchUrl() {
         return elasticsearchUrl;
@@ -49,5 +52,29 @@ public class AiSearchProperties {
 
     public void setEmbeddingModelUrl(String embeddingModelUrl) {
         this.embeddingModelUrl = embeddingModelUrl;
+    }
+
+    public double getMinScoreThreshold() {
+        return minScoreThreshold;
+    }
+
+    public void setMinScoreThreshold(double minScoreThreshold) {
+        this.minScoreThreshold = minScoreThreshold;
+    }
+
+    public int getNumCandidatesMultiplier() {
+        return numCandidatesMultiplier;
+    }
+
+    public void setNumCandidatesMultiplier(int numCandidatesMultiplier) {
+        this.numCandidatesMultiplier = numCandidatesMultiplier;
+    }
+
+    public int getNumCandidatesMin() {
+        return numCandidatesMin;
+    }
+
+    public void setNumCandidatesMin(int numCandidatesMin) {
+        this.numCandidatesMin = numCandidatesMin;
     }
 }

@@ -14,8 +14,6 @@ import java.util.Map;
 @Service
 public class VectorSearchService {
 
-    private static final double MIN_SCORE_THRESHOLD = 0.74d;
-
     private final ElasticsearchClient client;
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
@@ -35,13 +33,17 @@ public class VectorSearchService {
         List<Float> queryVector = toFloatList(embedding);
 
         try {
+            long numCandidates = Math.max(
+                    (long) size * properties.getNumCandidatesMultiplier(),
+                    properties.getNumCandidatesMin()
+            );
             SearchResponse<Map> response = client.search(s -> s
                             .index(properties.getIndexName())
                             .knn(knn -> knn
                                     .field("product_vector")
                                     .queryVector(queryVector)
                                     .k((long) size)
-                                    .numCandidates((long) Math.max(size * 5, 50))
+                                    .numCandidates(numCandidates)
                             )
                             .size(size),
                     Map.class
@@ -52,7 +54,7 @@ public class VectorSearchService {
                 String id = hit.id();
                 Double score = hit.score();
                 Map<String, Object> source = hit.source();
-                if (score != null && score >= MIN_SCORE_THRESHOLD) {
+                if (score != null && score >= properties.getMinScoreThreshold()) {
                     results.add(new SearchHitResult(id, score, source));
                 }
             });
