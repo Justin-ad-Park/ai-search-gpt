@@ -66,7 +66,7 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(3)
     void semanticSearchShouldReturnRelevantProducts2() {
-        String query = "물고기";
+        String query = "바다 가득한 ";
         String[] expectedCategoryKeywords = {"수산","간편식"};
 
         assertSemanticSearchContainsCategories(query, 20, expectedCategoryKeywords);
