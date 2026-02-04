@@ -86,6 +86,33 @@ class VectorSearchIntegrationTest {
         Assertions.assertTrue(results.isEmpty(), "MIN_SCORE_THRESHOLD 이하이면 검색 결과가 없어야 합니다.");
     }
 
+    @Test
+    @Order(5)
+    void semanticSearchFiveQueriesTop5() {
+        // 모델 비교용 5개 쿼리 결과를 출력
+        String[] queries = {
+                "어린이 간식으로 좋은 전통 과자",
+                "다이어트에 좋은 저당 간식",
+                "단백질 많은 간편식",
+                "신선한 해산물 반찬",
+                "채식 위주의 건강식"
+        };
+
+        int size = 5;
+        for (String query : queries) {
+            List<SearchHitResult> results = vectorSearchService.search(query, size);
+            System.out.println("[COMPARE_QUERY] " + query);
+            for (int i = 0; i < results.size(); i++) {
+                SearchHitResult hit = results.get(i);
+                System.out.println("rank=" + (i + 1)
+                        + ", score=" + hit.score()
+                        + ", id=" + hit.id()
+                        + ", name=" + hit.source().get("product_name")
+                        + ", category=" + hit.source().get("category"));
+            }
+        }
+    }
+
     private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
         // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
         List<SearchHitResult> results = vectorSearchService.search(query, size);

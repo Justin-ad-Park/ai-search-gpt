@@ -13,6 +13,8 @@ public class AiSearchProperties {
     private String indexName;
     // 임베딩 모델 위치 (DJL 지원 URL)
     private String embeddingModelUrl;
+    // 임베딩 모델 로컬 경로 (classpath: 또는 파일 시스템 경로)
+    private String embeddingModelPath;
     // 검색 결과 필터링 최소 점수
     private double minScoreThreshold;
     // 후보군 확장 배수
@@ -58,6 +60,14 @@ public class AiSearchProperties {
 
     public void setEmbeddingModelUrl(String embeddingModelUrl) {
         this.embeddingModelUrl = embeddingModelUrl;
+    }
+
+    public String getEmbeddingModelPath() {
+        return embeddingModelPath;
+    }
+
+    public void setEmbeddingModelPath(String embeddingModelPath) {
+        this.embeddingModelPath = embeddingModelPath;
     }
 
     public double getMinScoreThreshold() {

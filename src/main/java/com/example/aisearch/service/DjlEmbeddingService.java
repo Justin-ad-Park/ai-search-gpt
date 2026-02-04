@@ -8,9 +8,14 @@ import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
+import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
 import com.example.aisearch.config.AiSearchProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,27 +23,47 @@ import java.io.IOException;
 @Service
 public class DjlEmbeddingService implements EmbeddingService {
 
+    private static final Logger log = LoggerFactory.getLogger(DjlEmbeddingService.class);
+
     private final AiSearchProperties properties;
+    private final ResourceLoader resourceLoader;
     private ZooModel<String, float[]> model;
     private Predictor<String, float[]> predictor;
     private int dimensions;
 
-    public DjlEmbeddingService(AiSearchProperties properties) {
+    public DjlEmbeddingService(AiSearchProperties properties, ResourceLoader resourceLoader) {
         this.properties = properties;
+        this.resourceLoader = resourceLoader;
     }
 
     @PostConstruct
     public void init() throws ModelNotFoundException, MalformedModelException, IOException {
         // DJL 모델 로딩을 위한 조건 설정
-        Criteria<String, float[]> criteria = Criteria.builder()
+        Criteria.Builder<String, float[]> criteria = Criteria.builder()
                 .setTypes(String.class, float[].class)
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
-                .optModelUrls(properties.getEmbeddingModelUrl())
-                .optProgress(new ProgressBar())
-                .build();
+                .optProgress(new ProgressBar());
+
+        String modelPath = properties.getEmbeddingModelPath();
+        if (modelPath != null && !modelPath.isBlank() && !"__NONE__".equalsIgnoreCase(modelPath.trim())) {
+            // classpath: 경로를 실제 파일 경로로 변환
+            Resource resource = resourceLoader.getResource(modelPath);
+            var resolvedPath = resource.getFile().toPath();
+            log.info("[EMBED_MODEL] using model path: {} -> {}", modelPath, resolvedPath);
+            criteria.optModelPath(resolvedPath);
+            // 로컬 모델은 translatorFactory를 명시해 줘야 안정적으로 로딩됨
+            criteria.optTranslatorFactory(new TextEmbeddingTranslatorFactory());
+        } else {
+            // 기본값: DJL 지원 URL
+            String modelUrl = properties.getEmbeddingModelUrl();
+            log.info("[EMBED_MODEL] using model url: {}", modelUrl);
+            criteria.optModelUrls(modelUrl);
+        }
+
+        Criteria<String, float[]> buildCriteria = criteria.build();
 
         // 모델/예측기 로딩
-        model = criteria.loadModel();
+        model = buildCriteria.loadModel();
         predictor = model.newPredictor();
 
         // 차원 수를 구하기 위해 1회 추론
