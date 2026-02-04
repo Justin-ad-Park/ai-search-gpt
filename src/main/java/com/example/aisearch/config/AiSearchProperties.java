@@ -21,6 +21,18 @@ public class AiSearchProperties {
     private int numCandidatesMultiplier;
     // 후보군 최소 개수
     private int numCandidatesMin;
+    // 로컬 개발용: ES port-forward 자동 수행 여부
+    private boolean autoPortForward;
+    // k8s 네임스페이스
+    private String k8sNamespace;
+    // k8s ES HTTP 서비스 이름 (비어있으면 자동 탐지)
+    private String k8sServiceName;
+    // k8s Secret 이름 (elastic 비밀번호)
+    private String k8sSecretName;
+    // 로컬 포트
+    private int k8sLocalPort;
+    // 원격 포트
+    private int k8sRemotePort;
 
     public String getElasticsearchUrl() {
         return elasticsearchUrl;
@@ -92,5 +104,53 @@ public class AiSearchProperties {
 
     public void setNumCandidatesMin(int numCandidatesMin) {
         this.numCandidatesMin = numCandidatesMin;
+    }
+
+    public boolean isAutoPortForward() {
+        return autoPortForward;
+    }
+
+    public void setAutoPortForward(boolean autoPortForward) {
+        this.autoPortForward = autoPortForward;
+    }
+
+    public String getK8sNamespace() {
+        return k8sNamespace;
+    }
+
+    public void setK8sNamespace(String k8sNamespace) {
+        this.k8sNamespace = k8sNamespace;
+    }
+
+    public String getK8sServiceName() {
+        return k8sServiceName;
+    }
+
+    public void setK8sServiceName(String k8sServiceName) {
+        this.k8sServiceName = k8sServiceName;
+    }
+
+    public String getK8sSecretName() {
+        return k8sSecretName;
+    }
+
+    public void setK8sSecretName(String k8sSecretName) {
+        this.k8sSecretName = k8sSecretName;
+    }
+
+    public int getK8sLocalPort() {
+        return k8sLocalPort;
+    }
+
+    public void setK8sLocalPort(int k8sLocalPort) {
+        this.k8sLocalPort = k8sLocalPort;
+    }
+
+    public int getK8sRemotePort() {
+        return k8sRemotePort;
+    }
+
+    public void setK8sRemotePort(int k8sRemotePort) {
+        this.k8sRemotePort = k8sRemotePort;
     }
 }

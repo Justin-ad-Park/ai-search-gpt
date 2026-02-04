@@ -6,9 +6,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
@@ -27,22 +25,25 @@ public final class ElasticsearchDirectExecutionSetup {
 
             // 비밀번호가 없으면 k8s Secret에서 읽어 설정
             if (isBlank(System.getProperty("AI_SEARCH_ES_PASSWORD")) && isBlank(System.getenv("AI_SEARCH_ES_PASSWORD"))) {
-                String password = runCommand(
-                        "kubectl", "get", "secret", "ai-search-es-es-elastic-user",
-                        "-n", "ai-search", "-o", "go-template={{.data.elastic | base64decode}}"
-                ).trim();
+                String password = ElasticsearchK8sHelper.readElasticPassword(
+                        "ai-search",
+                        "ai-search-es-es-elastic-user"
+                );
                 setIfMissing("AI_SEARCH_ES_PASSWORD", password);
             }
 
             // ES URL이 없으면 로컬 포트포워딩을 열고 설정
             if (isBlank(System.getProperty("AI_SEARCH_ES_URL")) && isBlank(System.getenv("AI_SEARCH_ES_URL"))) {
                 String service = findElasticsearchHttpService();
-                Process portForwardProcess = new ProcessBuilder(
-                        "kubectl", "port-forward", "-n", "ai-search", "service/" + service, "9200:9200"
-                ).redirectErrorStream(true).start();
+                ElasticsearchK8sHelper.PortForwardHandle handle = ElasticsearchK8sHelper.startPortForward(
+                        "ai-search",
+                        service,
+                        9200,
+                        9200
+                );
                 Thread.sleep(3000L);
                 setIfMissing("AI_SEARCH_ES_URL", "http://localhost:9200");
-                return new SetupResult(portForwardProcess);
+                return new SetupResult(handle.process());
             }
 
             return new SetupResult(null);
@@ -64,16 +65,7 @@ public final class ElasticsearchDirectExecutionSetup {
 
     private static String findElasticsearchHttpService() throws IOException, InterruptedException {
         // 네임스페이스 내 -es-http 서비스 자동 탐지
-        String output = runCommand(
-                "kubectl", "get", "svc", "-n", "ai-search",
-                "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"
-        );
-        for (String line : output.split("\\R")) {
-            if (line.endsWith("-es-http")) {
-                return line.trim();
-            }
-        }
-        return "ai-search-es-es-http";
+        return ElasticsearchK8sHelper.findEsHttpService("ai-search");
     }
 
     private static void trustAllHttpsForLocalOnly() throws Exception {
@@ -115,23 +107,6 @@ public final class ElasticsearchDirectExecutionSetup {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private static String runCommand(String... command) throws IOException, InterruptedException {
-        // 외부 커맨드를 실행해 결과를 문자열로 반환
-        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
-        StringBuilder out = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                out.append(line).append('\n');
-            }
-        }
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new IllegalStateException("command failed: " + String.join(" ", command) + "\n" + out);
-        }
-        return out.toString();
     }
 
     public record SetupResult(Process portForwardProcess) {

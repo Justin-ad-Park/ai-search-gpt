@@ -59,13 +59,22 @@ public class VectorSearchService {
                 Map<String, Object> source = hit.source();
                 // 최소 점수 기준 이하 결과는 제외
                 if (score != null && score >= properties.getMinScoreThreshold()) {
-                    results.add(new SearchHitResult(id, score, source));
+                    results.add(new SearchHitResult(id, score, stripVector(source)));
                 }
             });
             return results;
         } catch (IOException e) {
             throw new IllegalStateException("벡터 검색 실패", e);
         }
+    }
+
+    private Map<String, Object> stripVector(Map<String, Object> source) {
+        if (source == null || source.isEmpty()) {
+            return source;
+        }
+        Map<String, Object> filtered = new java.util.HashMap<>(source);
+        filtered.remove("product_vector");
+        return filtered;
     }
 
     private List<Float> toFloatList(float[] array) {

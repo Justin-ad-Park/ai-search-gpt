@@ -9,6 +9,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
+import com.example.aisearch.support.ElasticsearchAutoConnector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,15 +19,16 @@ import java.net.URI;
 public class ElasticsearchConfig {
 
     @Bean(destroyMethod = "close")
-    public RestClient restClient(AiSearchProperties properties) {
+    public RestClient restClient(AiSearchProperties properties, ElasticsearchAutoConnector autoConnector) {
+        ElasticsearchAutoConnector.ConnectionInfo info = autoConnector.resolve(properties);
         // URL에서 호스트/포트/프로토콜을 분리
-        URI uri = URI.create(properties.getElasticsearchUrl());
+        URI uri = URI.create(info.url());
 
         // 기본 인증(사용자/비밀번호) 설정
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 new AuthScope(uri.getHost(), uri.getPort()),
-                new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword())
+                new UsernamePasswordCredentials(info.username(), info.password())
         );
 
         // Elasticsearch 저수준 REST 클라이언트 생성
