@@ -23,6 +23,7 @@ class VectorSearchIntegrationTest {
     private static final ElasticsearchDirectExecutionSetup.SetupResult SETUP_RESULT;
 
     static {
+        // 테스트 실행 전 Elasticsearch 접속 준비
         SETUP_RESULT = ElasticsearchDirectExecutionSetup.setup();
     }
 
@@ -38,6 +39,7 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(1)
     void reindexSampleData() {
+        // 인덱스 재생성 후 샘플 데이터 인덱싱
         indexManagementService.recreateIndex();
         long indexed = productIndexingService.reindexSampleData();
         Assertions.assertTrue(indexed >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
@@ -47,6 +49,7 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(2)
     void semanticSearchShouldReturnRelevantProducts() {
+        // 아이 간식 관련 쿼리 테스트
         String query = "어린이가 먹을 만한 전통 스낵";
         String[] expectedCategoryKeywords = {"간식"};
 
@@ -56,6 +59,7 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(3)
     void semanticSearchShouldReturnRelevantProducts2() {
+        // 수산물 관련 쿼리 테스트
         String query = "바다 가득한 ";
         String[] expectedCategoryKeywords = {"수산","간편식"};
 
@@ -65,6 +69,7 @@ class VectorSearchIntegrationTest {
     @Test
     @Order(4)
     void semanticSearchShouldReturnEmptyWhenBelowThreshold() {
+        // 관련성이 낮은 키워드는 결과가 비어야 함
         String query = "태풍";
 
         List<SearchHitResult> results = vectorSearchService.search(query, 5);
@@ -82,6 +87,7 @@ class VectorSearchIntegrationTest {
     }
 
     private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
+        // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
         List<SearchHitResult> results = vectorSearchService.search(query, size);
 
         System.out.println("[SEARCH] query=" + query);
@@ -108,6 +114,7 @@ class VectorSearchIntegrationTest {
     }
 
     private boolean containsAnyKeyword(String category, String... keywords) {
+        // 카테고리 문자열에 키워드가 포함되는지 체크
         if (category == null) {
             return false;
         }
@@ -121,6 +128,7 @@ class VectorSearchIntegrationTest {
 
     @AfterAll
     static void teardown() {
+        // 테스트 종료 후 포트포워딩 정리
         ElasticsearchDirectExecutionSetup.cleanup(SETUP_RESULT);
     }
 }

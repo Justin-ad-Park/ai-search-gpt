@@ -33,17 +33,21 @@ public class ProductIndexingService {
     }
 
     public long reindexSampleData() {
+        // 샘플 데이터 로딩
         List<FoodProduct> foods = foodDataLoader.loadAll();
         if (foods.isEmpty()) {
             return 0;
         }
 
+        // Bulk 인덱싱 요청 빌더
         BulkRequest.Builder bulkBuilder = new BulkRequest.Builder().index(properties.getIndexName());
 
         for (FoodProduct food : foods) {
+            // 상품 텍스트를 임베딩으로 변환
             float[] embedding = embeddingService.embed(food.toEmbeddingText());
             List<Float> vector = toFloatList(embedding);
 
+            // ES에 넣을 문서 구성
             Map<String, Object> doc = new HashMap<>();
             doc.put("id", food.getId());
             doc.put("product_name", food.getProductName());
@@ -51,6 +55,7 @@ public class ProductIndexingService {
             doc.put("description", food.getDescription());
             doc.put("product_vector", vector);
 
+            // bulk에 추가
             bulkBuilder.operations(op -> op
                     .index(idx -> idx
                             .id(food.getId())
@@ -60,6 +65,7 @@ public class ProductIndexingService {
         }
 
         try {
+            // refresh=wait_for로 바로 검색 가능 상태로 만듦
             var response = client.bulk(bulkBuilder.refresh(Refresh.WaitFor).build());
             if (response.errors()) {
                 throw new IllegalStateException("Bulk 인덱싱 중 일부 실패");

@@ -28,7 +28,9 @@ public class SearchController {
             @RequestParam("q") @NotBlank String query,
             @RequestParam(value = "size", defaultValue = "5") @Min(1) @Max(20) int size
     ) {
+        // 요청 파라미터 검증 후 벡터 검색 수행
         List<SearchHitResult> results = vectorSearchService.search(query, size);
+        // 간단한 JSON 응답 구성
         return Map.of(
                 "query", query,
                 "size", size,

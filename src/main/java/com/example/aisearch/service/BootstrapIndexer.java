@@ -23,6 +23,7 @@ public class BootstrapIndexer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // 애플리케이션 시작 직후 인덱스를 재생성하고 샘플 데이터를 색인
         indexManagementService.recreateIndex();
         long count = productIndexingService.reindexSampleData();
         log.info("Indexed {} documents into Elasticsearch", count);

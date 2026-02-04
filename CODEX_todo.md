@@ -11,6 +11,7 @@
 3. 검색 결과 모델링 부족
    - SearchHitResult가 Map<String,Object>를 그대로 노출
      → 도메인 DTO로 변환하거나 전용 결과 모델 설계 필요
+   
 4. 매직 넘버/상수 하드코딩
    - k, numCandidates, MIN_SCORE_THRESHOLD 등 하드코딩
      → application.yml 또는 설정 클래스로 이동 권장

@@ -29,14 +29,17 @@ public class VectorSearchService {
     }
 
     public List<SearchHitResult> search(String query, int size) {
+        // 검색어를 임베딩 벡터로 변환
         float[] embedding = embeddingService.embed(query);
         List<Float> queryVector = toFloatList(embedding);
 
         try {
+            // 후보군 크기는 size * multiplier, 단 최소값 보장
             long numCandidates = Math.max(
                     (long) size * properties.getNumCandidatesMultiplier(),
                     properties.getNumCandidatesMin()
             );
+            // kNN 검색 실행
             SearchResponse<Map> response = client.search(s -> s
                             .index(properties.getIndexName())
                             .knn(knn -> knn
@@ -54,6 +57,7 @@ public class VectorSearchService {
                 String id = hit.id();
                 Double score = hit.score();
                 Map<String, Object> source = hit.source();
+                // 최소 점수 기준 이하 결과는 제외
                 if (score != null && score >= properties.getMinScoreThreshold()) {
                     results.add(new SearchHitResult(id, score, source));
                 }

@@ -19,14 +19,17 @@ public class ElasticsearchConfig {
 
     @Bean(destroyMethod = "close")
     public RestClient restClient(AiSearchProperties properties) {
+        // URL에서 호스트/포트/프로토콜을 분리
         URI uri = URI.create(properties.getElasticsearchUrl());
 
+        // 기본 인증(사용자/비밀번호) 설정
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 new AuthScope(uri.getHost(), uri.getPort()),
                 new UsernamePasswordCredentials(properties.getUsername(), properties.getPassword())
         );
 
+        // Elasticsearch 저수준 REST 클라이언트 생성
         return RestClient.builder(new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme()))
                 .setHttpClientConfigCallback(httpClientBuilder ->
                         httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
@@ -36,11 +39,13 @@ public class ElasticsearchConfig {
 
     @Bean(destroyMethod = "close")
     public ElasticsearchTransport elasticsearchTransport(RestClient restClient) {
+        // Java API Client에서 사용할 전송 계층
         return new RestClientTransport(restClient, new JacksonJsonpMapper());
     }
 
     @Bean
     public ElasticsearchClient elasticsearchClient(ElasticsearchTransport transport) {
+        // 고수준 Elasticsearch Java Client
         return new ElasticsearchClient(transport);
     }
 }

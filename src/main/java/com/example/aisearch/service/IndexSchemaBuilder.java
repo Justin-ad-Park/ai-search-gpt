@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public class IndexSchemaBuilder {
 
     public String buildMapping(int vectorDimensions) {
+        // vectorDimensions는 임베딩 벡터 차원수
         return """
                 {
                   "settings": {

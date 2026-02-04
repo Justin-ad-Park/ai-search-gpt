@@ -19,10 +19,13 @@ public final class ElasticsearchDirectExecutionSetup {
 
     public static SetupResult setup() {
         try {
+            // 로컬 테스트용으로 HTTPS 검증을 완화 (운영 환경에서는 사용 금지)
             trustAllHttpsForLocalOnly();
 
+            // 기본 사용자명 설정
             setIfMissing("AI_SEARCH_ES_USERNAME", "elastic");
 
+            // 비밀번호가 없으면 k8s Secret에서 읽어 설정
             if (isBlank(System.getProperty("AI_SEARCH_ES_PASSWORD")) && isBlank(System.getenv("AI_SEARCH_ES_PASSWORD"))) {
                 String password = runCommand(
                         "kubectl", "get", "secret", "ai-search-es-es-elastic-user",
@@ -31,6 +34,7 @@ public final class ElasticsearchDirectExecutionSetup {
                 setIfMissing("AI_SEARCH_ES_PASSWORD", password);
             }
 
+            // ES URL이 없으면 로컬 포트포워딩을 열고 설정
             if (isBlank(System.getProperty("AI_SEARCH_ES_URL")) && isBlank(System.getenv("AI_SEARCH_ES_URL"))) {
                 String service = findElasticsearchHttpService();
                 Process portForwardProcess = new ProcessBuilder(
@@ -53,11 +57,13 @@ public final class ElasticsearchDirectExecutionSetup {
         }
         Process process = result.portForwardProcess();
         if (process != null && process.isAlive()) {
+            // 테스트 종료 시 포트포워딩 프로세스 종료
             process.destroy();
         }
     }
 
     private static String findElasticsearchHttpService() throws IOException, InterruptedException {
+        // 네임스페이스 내 -es-http 서비스 자동 탐지
         String output = runCommand(
                 "kubectl", "get", "svc", "-n", "ai-search",
                 "-o", "jsonpath={range .items[*]}{.metadata.name}{\"\\n\"}{end}"
@@ -71,6 +77,7 @@ public final class ElasticsearchDirectExecutionSetup {
     }
 
     private static void trustAllHttpsForLocalOnly() throws Exception {
+        // 모든 인증서를 신뢰하도록 SSLContext 설정 (로컬 테스트용)
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
                     @Override
@@ -100,6 +107,7 @@ public final class ElasticsearchDirectExecutionSetup {
     }
 
     private static void setIfMissing(String key, String value) {
+        // 시스템 속성/환경변수에 값이 없을 때만 세팅
         if (isBlank(System.getProperty(key)) && isBlank(System.getenv(key))) {
             System.setProperty(key, value);
         }
@@ -110,6 +118,7 @@ public final class ElasticsearchDirectExecutionSetup {
     }
 
     private static String runCommand(String... command) throws IOException, InterruptedException {
+        // 외부 커맨드를 실행해 결과를 문자열로 반환
         Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
         StringBuilder out = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {

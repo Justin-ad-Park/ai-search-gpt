@@ -20,6 +20,7 @@ public class FoodDataLoader {
     }
 
     public List<FoodProduct> loadAll() {
+        // classpath에 있는 JSON 샘플 데이터를 읽어 온다
         ClassPathResource resource = new ClassPathResource("data/food-products.json");
         try (InputStream inputStream = resource.getInputStream()) {
             return objectMapper.readValue(inputStream, new TypeReference<>() {});

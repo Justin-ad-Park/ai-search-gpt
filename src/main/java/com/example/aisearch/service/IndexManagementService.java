@@ -30,13 +30,16 @@ public class IndexManagementService {
     public void recreateIndex() {
         String indexName = properties.getIndexName();
         try {
+            // 기존 인덱스가 있으면 삭제
             boolean exists = client.indices().exists(e -> e.index(indexName)).value();
             if (exists) {
                 client.indices().delete(d -> d.index(indexName));
             }
 
+            // 임베딩 차원을 반영한 매핑 생성
             String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions());
 
+            // 새 인덱스 생성
             client.indices().create(c -> c
                     .index(indexName)
                     .withJson(new StringReader(mapping))

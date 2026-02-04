@@ -2,9 +2,13 @@ package com.example.aisearch.model;
 
 public class FoodProduct {
 
+    // 상품 ID
     private String id;
+    // 상품명
     private String productName;
+    // 카테고리
     private String category;
+    // 설명
     private String description;
 
     public FoodProduct() {
@@ -50,6 +54,7 @@ public class FoodProduct {
     }
 
     public String toEmbeddingText() {
+        // 검색 품질을 위해 여러 필드를 합쳐 임베딩 텍스트로 사용
         return productName + " " + category + " " + description;
     }
 }

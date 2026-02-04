@@ -5,13 +5,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ai-search")
 public class AiSearchProperties {
 
+    // Elasticsearch 접속 정보
     private String elasticsearchUrl;
     private String username;
     private String password;
+    // 색인명
     private String indexName;
+    // 임베딩 모델 위치 (DJL 지원 URL)
     private String embeddingModelUrl;
+    // 검색 결과 필터링 최소 점수
     private double minScoreThreshold;
+    // 후보군 확장 배수
     private int numCandidatesMultiplier;
+    // 후보군 최소 개수
     private int numCandidatesMin;
 
     public String getElasticsearchUrl() {
