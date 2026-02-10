@@ -44,7 +44,7 @@ public class DjlEmbeddingService implements EmbeddingService {
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
                 .optProgress(new ProgressBar());
 
-        String modelPath = properties.getEmbeddingModelPath();
+        String modelPath = properties.embeddingModelPath();
         if (modelPath != null && !modelPath.isBlank() && !"__NONE__".equalsIgnoreCase(modelPath.trim())) {
             // classpath: 경로를 실제 파일 경로로 변환
             Resource resource = resourceLoader.getResource(modelPath);
@@ -55,7 +55,7 @@ public class DjlEmbeddingService implements EmbeddingService {
             criteria.optTranslatorFactory(new TextEmbeddingTranslatorFactory());
         } else {
             // 기본값: DJL 지원 URL
-            String modelUrl = properties.getEmbeddingModelUrl();
+            String modelUrl = properties.embeddingModelUrl();
             log.info("[EMBED_MODEL] using model url: {}", modelUrl);
             criteria.optModelUrls(modelUrl);
         }

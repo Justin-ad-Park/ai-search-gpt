@@ -13,9 +13,10 @@ ai-search:
   min-score-threshold: ${AI_SEARCH_MIN_SCORE:0.74}
   num-candidates-multiplier: ${AI_SEARCH_NUM_CANDIDATES_MULTIPLIER:5}
   num-candidates-min: ${AI_SEARCH_NUM_CANDIDATES_MIN:50}
-  auto-port-forward: ${AI_SEARCH_AUTO_PORT_FORWARD:true}
-  k8s-namespace: ${AI_SEARCH_K8S_NAMESPACE:ai-search}
-  k8s-service-name: ${AI_SEARCH_K8S_SERVICE:}
-  k8s-secret-name: ${AI_SEARCH_K8S_SECRET:ai-search-es-es-elastic-user}
-  k8s-local-port: ${AI_SEARCH_K8S_LOCAL_PORT:9200}
-  k8s-remote-port: ${AI_SEARCH_K8S_REMOTE_PORT:9200}
+  k8s:
+    auto-port-forward: ${AI_SEARCH_AUTO_PORT_FORWARD:true}
+    namespace: ${AI_SEARCH_K8S_NAMESPACE:ai-search}
+    service-name: ${AI_SEARCH_K8S_SERVICE:}
+    secret-name: ${AI_SEARCH_K8S_SECRET:ai-search-es-es-elastic-user}
+    local-port: ${AI_SEARCH_K8S_LOCAL_PORT:9200}
+    remote-port: ${AI_SEARCH_K8S_REMOTE_PORT:9200}

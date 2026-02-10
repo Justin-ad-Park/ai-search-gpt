@@ -28,7 +28,7 @@ public class IndexManagementService {
     }
 
     public void recreateIndex() {
-        String indexName = properties.getIndexName();
+        String indexName = properties.indexName();
         try {
             // 기존 인덱스가 있으면 삭제
             boolean exists = client.indices().exists(e -> e.index(indexName)).value();

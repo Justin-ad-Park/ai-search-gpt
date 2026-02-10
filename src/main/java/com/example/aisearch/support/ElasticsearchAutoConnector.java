@@ -1,5 +1,6 @@
 package com.example.aisearch.support;
 
+import com.example.aisearch.config.AiSearchK8sProperties;
 import com.example.aisearch.config.AiSearchProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,20 +16,20 @@ public class ElasticsearchAutoConnector {
 
     private final AtomicReference<ElasticsearchK8sHelper.PortForwardHandle> handleRef = new AtomicReference<>();
 
-    public ConnectionInfo resolve(AiSearchProperties properties) {
-        URI uri = URI.create(properties.getElasticsearchUrl());
-        String username = properties.getUsername();
-        String password = properties.getPassword();
+    public ConnectionInfo resolve(AiSearchProperties properties, AiSearchK8sProperties k8sProperties) {
+        URI uri = URI.create(properties.elasticsearchUrl());
+        String username = properties.username();
+        String password = properties.password();
 
-        if (!properties.isAutoPortForward() || !isLocalHost(uri.getHost())) {
+        if (!k8sProperties.autoPortForward() || !isLocalHost(uri.getHost())) {
             return new ConnectionInfo(uri.toString(), username, password);
         }
 
         try {
             ElasticsearchK8sHelper.requireKubectl();
 
-            String namespace = properties.getK8sNamespace();
-            String serviceName = properties.getK8sServiceName();
+            String namespace = k8sProperties.namespace();
+            String serviceName = k8sProperties.serviceName();
             if (serviceName == null || serviceName.isBlank()) {
                 serviceName = ElasticsearchK8sHelper.findEsHttpService(namespace);
             }
@@ -36,14 +37,14 @@ public class ElasticsearchAutoConnector {
             if (password == null || password.isBlank() || "password".equals(password)) {
                 password = ElasticsearchK8sHelper.readElasticPassword(
                         namespace,
-                        properties.getK8sSecretName()
+                        k8sProperties.secretName()
                 );
-                log.info("[ES_AUTO] elastic password loaded from secret {}", properties.getK8sSecretName());
+                log.info("[ES_AUTO] elastic password loaded from secret {}", k8sProperties.secretName());
             }
 
-            ensurePortForward(namespace, serviceName, properties.getK8sLocalPort(), properties.getK8sRemotePort());
+            ensurePortForward(namespace, serviceName, k8sProperties.localPort(), k8sProperties.remotePort());
             String scheme = uri.getScheme() == null ? "http" : uri.getScheme();
-            String resolvedUrl = scheme + "://localhost:" + properties.getK8sLocalPort();
+            String resolvedUrl = scheme + "://localhost:" + k8sProperties.localPort();
             log.info("[ES_AUTO] using port-forwarded url {}", resolvedUrl);
             return new ConnectionInfo(resolvedUrl, username, password);
         } catch (Exception e) {

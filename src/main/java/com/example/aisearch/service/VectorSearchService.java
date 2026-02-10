@@ -36,12 +36,12 @@ public class VectorSearchService {
         try {
             // 후보군 크기는 size * multiplier, 단 최소값 보장
             long numCandidates = Math.max(
-                    (long) size * properties.getNumCandidatesMultiplier(),
-                    properties.getNumCandidatesMin()
+                    (long) size * properties.numCandidatesMultiplier(),
+                    properties.numCandidatesMin()
             );
             // kNN 검색 실행
             SearchResponse<Map> response = client.search(s -> s
-                            .index(properties.getIndexName())
+                            .index(properties.indexName())
                             .knn(knn -> knn
                                     .field("product_vector")
                                     .queryVector(queryVector)
@@ -58,7 +58,7 @@ public class VectorSearchService {
                 Double score = hit.score();
                 Map<String, Object> source = hit.source();
                 // 최소 점수 기준 이하 결과는 제외
-                if (score != null && score >= properties.getMinScoreThreshold()) {
+                if (score != null && score >= properties.minScoreThreshold()) {
                     results.add(new SearchHitResult(id, score, stripVector(source)));
                 }
             });

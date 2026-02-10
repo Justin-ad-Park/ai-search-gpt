@@ -4,8 +4,6 @@ import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.service.IndexManagementService;
 import com.example.aisearch.service.ProductIndexingService;
 import com.example.aisearch.service.VectorSearchService;
-import com.example.aisearch.support.ElasticsearchDirectExecutionSetup;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -20,12 +18,6 @@ import java.util.List;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class VectorSearchIntegrationTest {
 
-    private static final ElasticsearchDirectExecutionSetup.SetupResult SETUP_RESULT;
-
-    static {
-        // 테스트 실행 전 Elasticsearch 접속 준비
-        SETUP_RESULT = ElasticsearchDirectExecutionSetup.setup();
-    }
 
     @Autowired
     private IndexManagementService indexManagementService;
@@ -50,7 +42,7 @@ class VectorSearchIntegrationTest {
     @Order(2)
     void semanticSearchShouldReturnRelevantProducts() {
         // 아이 간식 관련 쿼리 테스트
-        String query = "어린이가 먹을 만한 전통 스낵";
+        String query = "어린이가 먹기 좋은 건강한 간식";
         String[] expectedCategoryKeywords = {"간식"};
 
         assertSemanticSearchContainsCategories(query, 5, expectedCategoryKeywords);
@@ -153,9 +145,4 @@ class VectorSearchIntegrationTest {
         return false;
     }
 
-    @AfterAll
-    static void teardown() {
-        // 테스트 종료 후 포트포워딩 정리
-        ElasticsearchDirectExecutionSetup.cleanup(SETUP_RESULT);
-    }
 }

@@ -19,8 +19,12 @@ import java.net.URI;
 public class ElasticsearchConfig {
 
     @Bean(destroyMethod = "close")
-    public RestClient restClient(AiSearchProperties properties, ElasticsearchAutoConnector autoConnector) {
-        ElasticsearchAutoConnector.ConnectionInfo info = autoConnector.resolve(properties);
+    public RestClient restClient(
+            AiSearchProperties properties,
+            AiSearchK8sProperties k8sProperties,
+            ElasticsearchAutoConnector autoConnector
+    ) {
+        ElasticsearchAutoConnector.ConnectionInfo info = autoConnector.resolve(properties, k8sProperties);
         // URL에서 호스트/포트/프로토콜을 분리
         URI uri = URI.create(info.url());
 

@@ -133,7 +133,7 @@
   {"id":"130","productName":"브로콜리 (2입)","category":"채소","description":"브로콜리입니다. 데쳐서 샐러드로 즐깁니다."},
 
   {"id":"131","productName":"국산 찹쌀 (2kg)","category":"쌀∙견과","description":"국산 찹쌀입니다. 떡, 밥, 죽에 사용됩니다."},
-  {"id":"132","productName":"현미 (2kg)","category":"쌀∙견과","description":"현미입니다. 건강한 식단에 적합합니다."},
+  {"id":"132","productName":"현미 (2kg)","category":"쌀∙견과","description":"현미, 건강식, 주식"},
   {"id":"133","productName":"귀리 (1kg)","category":"쌀∙견과","description":"귀리입니다. 오트밀과 잡곡밥에 사용됩니다."},
   {"id":"134","productName":"호두 반태 (300g)","category":"쌀∙견과","description":"호두 반태입니다. 베이킹과 간식에 활용됩니다."},
   {"id":"135","productName":"피스타치오 (200g)","category":"쌀∙견과","description":"피스타치오입니다. 고소한 견과류입니다."},
@@ -211,5 +211,8 @@
   {"id":"197","productName":"국산 콩국수용 콩물 (900ml)","category":"간편식","description":"콩물입니다. 콩국수용으로 적합합니다."},
   {"id":"198","productName":"유기농 딸기바나나 주스 (190ml×12)","category":"간식∙음료","description":"과일 주스입니다. 달콤한 혼합 과일 음료입니다."},
   {"id":"199","productName":"바삭 오징어튀김 (300g)","category":"간편식","description":"오징어튀김입니다. 에어프라이어로 조리합니다."},
-  {"id":"200","productName":"국산 고구마말랭이 (250g)","category":"간식∙음료","description":"고구마말랭이입니다. 달콤한 말랭이 간식입니다."}
+  {"id":"200","productName":"국산 고구마말랭이 (250g)","category":"간식∙음료","description":"고구마말랭이입니다. 달콤한 말랭이 간식입니다."},
+  {"id":"201","productName":"슈가 두부도너츠 (45g)","category":"간식∙음료","description":"어린이, 어른 모두가 좋아하는 도너츠를 두부로 만들어 더 건강한 도너츠 간식. 슈가 파우더로 달콤함을 더한"},
+  {"id":"202","productName":"현미 또띠아 20Cm 5입(225g)","category":"간식∙음료","description":"현미와 통밀을 사용하여 영양 가득!, 식사 대용, 간식, 통곡, 영양가득"},
+  {"id":"202","productName":"왕감자 통모짜 핫도그(4개입) (360g)","category":"간식∙음료","description":"감자, 통모찌, 모짜렐라, 치즈, 에어프라이어, 전자레인, 간편조리"}
 ]

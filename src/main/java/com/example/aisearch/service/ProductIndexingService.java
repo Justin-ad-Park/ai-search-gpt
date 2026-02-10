@@ -40,7 +40,7 @@ public class ProductIndexingService {
         }
 
         // Bulk 인덱싱 요청 빌더
-        BulkRequest.Builder bulkBuilder = new BulkRequest.Builder().index(properties.getIndexName());
+        BulkRequest.Builder bulkBuilder = new BulkRequest.Builder().index(properties.indexName());
 
         for (FoodProduct food : foods) {
             // 상품 텍스트를 임베딩으로 변환

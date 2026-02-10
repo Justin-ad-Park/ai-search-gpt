@@ -13,9 +13,10 @@
 ### 1) IndexingApplication 시작
 
 ```java
-new SpringApplicationBuilder(AiSearchGptApplication.class)
-    .properties(Map.of("ai-search.bootstrap-index", "true"))
-    .run(args);
+System.setProperty("ai-search.bootstrap-index", "true");
+SpringApplication application = new SpringApplication(AiSearchGptApplication.class);
+application.setWebApplicationType(WebApplicationType.NONE);
+application.run(args);
 ```
 
 - `AiSearchGptApplication`을 기반으로 Spring Boot 애플리케이션을 실행합니다.
@@ -114,3 +115,4 @@ public class BootstrapIndexer implements CommandLineRunner {
 ## 참고
 - 색인 전용 실행은 서버 없이도 가능합니다.
 - 필요하면 실행 시 `--spring.main.web-application-type=none` 옵션을 추가하면 됩니다.
+- ES 접속은 애플리케이션 내부의 auto port-forward 설정(`ai-search.k8s.*`)을 따릅니다.
