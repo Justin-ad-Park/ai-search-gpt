@@ -20,6 +20,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+/**
+ * Djl Embedding 서비스
+ *  - 모델 설명은 docs/01.embedding-model.md 참고
+ */
 @Service
 public class DjlEmbeddingService implements EmbeddingService {
 
@@ -66,7 +70,7 @@ public class DjlEmbeddingService implements EmbeddingService {
         model = buildCriteria.loadModel();
         predictor = model.newPredictor();
 
-        // 차원 수를 구하기 위해 1회 추론
+        // 차원 수를 구하기 위해 1회 추론 (모델이 몇 차원 벡터를 만드는지 확인)
         float[] probe = predictRaw("한글 식품 벡터 검색 테스트");
         dimensions = probe.length;
     }
@@ -94,6 +98,7 @@ public class DjlEmbeddingService implements EmbeddingService {
 
     private static float[] l2Normalize(float[] vector) {
         // 코사인 유사도 계산에 적합하도록 L2 정규화
+        // 각 요소를 벡터 길이(norm)로 나눠 단위 벡터로 만든다
         double sum = 0.0;
         for (float value : vector) {
             sum += value * value;

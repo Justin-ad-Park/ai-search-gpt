@@ -36,7 +36,7 @@ public class IndexManagementService {
                 client.indices().delete(d -> d.index(indexName));
             }
 
-            // 임베딩 차원을 반영한 매핑 생성
+            // 임베딩 차원을 반영한 매핑 생성 (dims는 모델 차원과 반드시 일치해야 함)
             String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions());
 
             // 새 인덱스 생성

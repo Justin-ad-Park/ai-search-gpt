@@ -29,6 +29,7 @@ public class ElasticsearchConfig {
         URI uri = URI.create(info.url());
 
         // 기본 인증(사용자/비밀번호) 설정
+        // RestClient가 모든 요청에 이 자격 증명을 붙이도록 한다
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 new AuthScope(uri.getHost(), uri.getPort()),

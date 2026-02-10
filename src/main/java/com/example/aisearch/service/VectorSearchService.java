@@ -35,11 +35,12 @@ public class VectorSearchService {
 
         try {
             // 후보군 크기는 size * multiplier, 단 최소값 보장
+            // 후보군이 너무 작으면 품질이 떨어질 수 있으므로 하한을 둔다
             long numCandidates = Math.max(
                     (long) size * properties.numCandidatesMultiplier(),
                     properties.numCandidatesMin()
             );
-            // kNN 검색 실행
+            // kNN 검색 실행 (dense_vector + cosine)
             SearchResponse<Map> response = client.search(s -> s
                             .index(properties.indexName())
                             .knn(knn -> knn
@@ -72,6 +73,7 @@ public class VectorSearchService {
         if (source == null || source.isEmpty()) {
             return source;
         }
+        // 응답에서 벡터 필드는 제거 (크고 불필요한 데이터)
         Map<String, Object> filtered = new java.util.HashMap<>(source);
         filtered.remove("product_vector");
         return filtered;

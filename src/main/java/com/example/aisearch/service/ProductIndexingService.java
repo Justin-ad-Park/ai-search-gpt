@@ -39,7 +39,7 @@ public class ProductIndexingService {
             return 0;
         }
 
-        // Bulk 인덱싱 요청 빌더
+        // Bulk 인덱싱 요청 빌더 (여러 문서를 한 번에 전송)
         BulkRequest.Builder bulkBuilder = new BulkRequest.Builder().index(properties.indexName());
 
         for (FoodProduct food : foods) {
@@ -47,7 +47,7 @@ public class ProductIndexingService {
             float[] embedding = embeddingService.embed(food.toEmbeddingText());
             List<Float> vector = toFloatList(embedding);
 
-            // ES에 넣을 문서 구성
+            // ES에 넣을 문서 구성 (필드명은 매핑과 일치해야 함)
             Map<String, Object> doc = new HashMap<>();
             doc.put("id", food.getId());
             doc.put("product_name", food.getProductName());
@@ -65,7 +65,7 @@ public class ProductIndexingService {
         }
 
         try {
-            // refresh=wait_for로 바로 검색 가능 상태로 만듦
+            // refresh=wait_for로 바로 검색 가능 상태로 만듦 (색인 직후 검색 테스트 용도)
             var response = client.bulk(bulkBuilder.refresh(Refresh.WaitFor).build());
             if (response.errors()) {
                 throw new IllegalStateException("Bulk 인덱싱 중 일부 실패");
