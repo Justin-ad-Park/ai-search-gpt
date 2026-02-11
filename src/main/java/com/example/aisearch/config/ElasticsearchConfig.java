@@ -24,7 +24,7 @@ public class ElasticsearchConfig {
             AiSearchK8sProperties k8sProperties,
             ElasticsearchAutoConnector autoConnector
     ) {
-        ElasticsearchAutoConnector.ConnectionInfo info = autoConnector.resolve(properties, k8sProperties);
+        ElasticsearchAutoConnector.ConnectionInfo info = autoConnector.getConnectionInfo(properties, k8sProperties);
         // URL에서 호스트/포트/프로토콜을 분리
         URI uri = URI.create(info.url());
 

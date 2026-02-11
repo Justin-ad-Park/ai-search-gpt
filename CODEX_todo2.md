@@ -12,12 +12,14 @@
 ## ⚠️ SOLID 위반/개선 후보 리스트
 
 ### 1. SRP 위반 가능
-- `src/main/java/com/example/aisearch/support/ElasticsearchAutoConnector.java`  
+- ~~`src/main/java/com/example/aisearch/support/ElasticsearchAutoConnector.java`~~  
   - 포트포워딩 판단
   - kubectl 검사/호출
   - 비밀번호 로딩
   - 연결 URL 조합까지 한 클래스가 담당
   - 책임이 너무 넓음
+    
+  - 
 - `src/main/java/com/example/aisearch/service/DjlEmbeddingService.java`  
   - 모델 로딩 정책(경로/URL)
   - 예측 수행
