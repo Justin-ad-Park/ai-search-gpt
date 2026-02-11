@@ -1,7 +1,7 @@
 # IndexingApplication.md
 
 ## 목적
-`IndexingApplication`은 **색인만 실행**하기 위한 전용 엔트리 포인트입니다.  
+색인만 실행하는 **배치 모드**를 제공하기 위한 문서입니다.  
 웹 서버를 띄우지 않고, 데이터 색인 작업만 수행하도록 설계했습니다.
 
 ---
@@ -10,17 +10,16 @@
 
 아래 순서대로 동작합니다.
 
-### 1) IndexingApplication 시작
+### 1) 프로파일 기반으로 배치 모드 시작
 
-```java
-System.setProperty("ai-search.bootstrap-index", "true");
-SpringApplication application = new SpringApplication(AiSearchGptApplication.class);
-application.setWebApplicationType(WebApplicationType.NONE);
-application.run(args);
+전용 메인 클래스는 제거되었고, **프로파일**로 배치 모드를 구동합니다.
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=indexing'
 ```
 
-- `AiSearchGptApplication`을 기반으로 Spring Boot 애플리케이션을 실행합니다.
-- 실행 시점에 `ai-search.bootstrap-index=true` 값을 **환경 설정으로 주입**합니다.
+- `indexing` 프로파일이 활성화되면 `application-indexing.yml`이 적용됩니다.
+- 이 설정에는 `ai-search.bootstrap-index: true`와 `spring.main.web-application-type: none`이 포함됩니다.
 
 ---
 
@@ -29,8 +28,9 @@ application.run(args);
 Spring Boot는 애플리케이션 시작 시점에:
 
 - `application.yml`
+- `application-indexing.yml` (indexing 프로파일일 때)
 - `환경 변수`
-- `properties(...)` 로 주입된 값
+- `--args` 로 전달된 값
 
 등을 모두 합쳐 **최종 설정(Environment)** 을 만듭니다.
 
@@ -43,6 +43,7 @@ Spring Boot는 애플리케이션 시작 시점에:
 `BootstrapIndexer`에는 다음 조건이 붙어 있습니다.
 
 ```java
+@Profile("indexing")
 @ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
 ```
 
@@ -71,6 +72,7 @@ long count = productIndexingService.reindexSampleData();
 
 ```java
 @Component
+@Profile("indexing")
 @ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
 public class BootstrapIndexer implements CommandLineRunner {
 
@@ -107,12 +109,12 @@ public class BootstrapIndexer implements CommandLineRunner {
 
 ## 요약 한 줄
 
-**IndexingApplication은 "bootstrap-index=true"를 주입해서,  
-조건이 맞으면 BootstrapIndexer가 자동 실행되도록 만든 구조입니다.**
+**indexing 프로파일을 활성화하면,  
+조건이 맞는 BootstrapIndexer가 자동 실행되어 배치 색인이 수행됩니다.**
 
 ---
 
 ## 참고
 - 색인 전용 실행은 서버 없이도 가능합니다.
-- 필요하면 실행 시 `--spring.main.web-application-type=none` 옵션을 추가하면 됩니다.
+- 프로파일로 실행하면 `application-indexing.yml`이 자동 적용됩니다.
 - ES 접속은 애플리케이션 내부의 auto port-forward 설정(`ai-search.k8s.*`)을 따릅니다.
