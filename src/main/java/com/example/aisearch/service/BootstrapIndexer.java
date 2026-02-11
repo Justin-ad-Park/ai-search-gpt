@@ -3,10 +3,14 @@ package com.example.aisearch.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("indexing")
 @ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
 public class BootstrapIndexer implements CommandLineRunner {
 
@@ -14,11 +18,14 @@ public class BootstrapIndexer implements CommandLineRunner {
 
     private final IndexManagementService indexManagementService;
     private final ProductIndexingService productIndexingService;
+    private final ConfigurableApplicationContext context;
 
     public BootstrapIndexer(IndexManagementService indexManagementService,
-                            ProductIndexingService productIndexingService) {
+                            ProductIndexingService productIndexingService,
+                            ConfigurableApplicationContext context) {
         this.indexManagementService = indexManagementService;
         this.productIndexingService = productIndexingService;
+        this.context = context;
     }
 
     @Override
@@ -27,5 +34,9 @@ public class BootstrapIndexer implements CommandLineRunner {
         indexManagementService.recreateIndex();
         long count = productIndexingService.reindexSampleData();
         log.info("Indexed {} documents into Elasticsearch", count);
+
+        // 배치 작업 완료 후 애플리케이션 종료
+        int exitCode = SpringApplication.exit(context, () -> 0);
+        System.exit(exitCode);
     }
 }

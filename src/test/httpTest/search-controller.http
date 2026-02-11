@@ -3,7 +3,7 @@
 GET http://localhost:8080/api/search?q=어린이%20간식
 
 ### size 지정 검색
-GET http://localhost:8080/api/search?q=바다%20가득한%20해산물&size=10
+GET http://localhost:8080/api/search?q=바다%20가득한%20해산물&size=2
 
 ### 다양한 키워드 예시
 GET http://localhost:8080/api/search?q=저당%20간식
