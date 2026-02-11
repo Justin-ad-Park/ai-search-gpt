@@ -8,13 +8,9 @@ import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
-import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
 import com.example.aisearch.config.AiSearchProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
@@ -27,17 +23,24 @@ import java.io.IOException;
 @Service
 public class DjlEmbeddingService implements EmbeddingService {
 
-    private static final Logger log = LoggerFactory.getLogger(DjlEmbeddingService.class);
-
     private final AiSearchProperties properties;
     private final ResourceLoader resourceLoader;
+    private final EmbeddingModelSourceResolver modelSourceResolver;
+    private final EmbeddingNormalizer embeddingNormalizer;
     private ZooModel<String, float[]> model;
     private Predictor<String, float[]> predictor;
     private int dimensions;
 
-    public DjlEmbeddingService(AiSearchProperties properties, ResourceLoader resourceLoader) {
+    public DjlEmbeddingService(
+            AiSearchProperties properties,
+            ResourceLoader resourceLoader,
+            EmbeddingModelSourceResolver modelSourceResolver,
+            EmbeddingNormalizer embeddingNormalizer
+    ) {
         this.properties = properties;
         this.resourceLoader = resourceLoader;
+        this.modelSourceResolver = modelSourceResolver;
+        this.embeddingNormalizer = embeddingNormalizer;
     }
 
     @PostConstruct
@@ -48,20 +51,14 @@ public class DjlEmbeddingService implements EmbeddingService {
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
                 .optProgress(new ProgressBar());
 
-        String modelPath = properties.embeddingModelPath();
-        if (modelPath != null && !modelPath.isBlank() && !"__NONE__".equalsIgnoreCase(modelPath.trim())) {
-            // classpath: 경로를 실제 파일 경로로 변환
-            Resource resource = resourceLoader.getResource(modelPath);
-            var resolvedPath = resource.getFile().toPath();
-            log.info("[EMBED_MODEL] using model path: {} -> {}", modelPath, resolvedPath);
-            criteria.optModelPath(resolvedPath);
-            // 로컬 모델은 translatorFactory를 명시해 줘야 안정적으로 로딩됨
-            criteria.optTranslatorFactory(new TextEmbeddingTranslatorFactory());
+        EmbeddingModelSource modelSource = modelSourceResolver.resolve(properties, resourceLoader);
+        if (modelSource.isPathBased()) {
+            criteria.optModelPath(modelSource.modelPath());
+            if (modelSource.requiresTranslatorFactory()) {
+                criteria.optTranslatorFactory(new ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory());
+            }
         } else {
-            // 기본값: DJL 지원 URL
-            String modelUrl = properties.embeddingModelUrl();
-            log.info("[EMBED_MODEL] using model url: {}", modelUrl);
-            criteria.optModelUrls(modelUrl);
+            criteria.optModelUrls(modelSource.modelUrl());
         }
 
         Criteria<String, float[]> buildCriteria = criteria.build();
@@ -79,7 +76,7 @@ public class DjlEmbeddingService implements EmbeddingService {
     public float[] embed(String text) {
         // 임베딩 생성 후 L2 정규화
         float[] raw = predictRaw(text);
-        return l2Normalize(raw);
+        return embeddingNormalizer.l2Normalize(raw);
     }
 
     @Override
@@ -94,25 +91,6 @@ public class DjlEmbeddingService implements EmbeddingService {
         } catch (TranslateException e) {
             throw new IllegalStateException("임베딩 생성 실패", e);
         }
-    }
-
-    private static float[] l2Normalize(float[] vector) {
-        // 코사인 유사도 계산에 적합하도록 L2 정규화
-        // 각 요소를 벡터 길이(norm)로 나눠 단위 벡터로 만든다
-        double sum = 0.0;
-        for (float value : vector) {
-            sum += value * value;
-        }
-        double norm = Math.sqrt(sum);
-        if (norm == 0.0) {
-            return vector;
-        }
-
-        float[] normalized = new float[vector.length];
-        for (int i = 0; i < vector.length; i++) {
-            normalized[i] = (float) (vector[i] / norm);
-        }
-        return normalized;
     }
 
     @PreDestroy
