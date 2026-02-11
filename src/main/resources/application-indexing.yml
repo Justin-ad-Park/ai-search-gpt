@@ -1,0 +1,6 @@
+ai-search:
+  bootstrap-index: true
+
+spring:
+  main:
+    web-application-type: none
