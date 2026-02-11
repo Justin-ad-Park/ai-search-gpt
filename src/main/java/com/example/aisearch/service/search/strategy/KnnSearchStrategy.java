@@ -39,6 +39,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                     (long) size * properties.numCandidatesMultiplier(),
                     properties.numCandidatesMin()
             );
+
             SearchResponse<Map> response = client.search(s -> s
                             .index(properties.indexName())
                             .knn(knn -> knn
