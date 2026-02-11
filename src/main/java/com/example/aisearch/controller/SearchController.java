@@ -1,7 +1,7 @@
 package com.example.aisearch.controller;
 
 import com.example.aisearch.model.SearchHitResult;
-import com.example.aisearch.service.VectorSearchService;
+import com.example.aisearch.service.search.VectorSearchService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

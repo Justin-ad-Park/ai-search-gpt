@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.indexing.bootstrap;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;

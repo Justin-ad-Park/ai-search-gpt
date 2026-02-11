@@ -1,7 +1,7 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.IndexManagementService;
-import com.example.aisearch.service.ProductIndexingService;
+import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
+import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -32,7 +32,7 @@ class SearchControllerRestClientTest {
     @BeforeAll
     void setUp() {
         indexManagementService.recreateIndex();
-        productIndexingService.reindexSampleData();
+        productIndexingService.reindexData();
     }
 
     @Test

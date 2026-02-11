@@ -1,7 +1,11 @@
-package com.example.aisearch.support;
+package com.example.aisearch.support.connection;
 
 import com.example.aisearch.config.AiSearchK8sProperties;
 import com.example.aisearch.config.AiSearchProperties;
+import com.example.aisearch.support.connection.parts.ElasticsearchUrlBuilder;
+import com.example.aisearch.support.connection.parts.PortForwardDecision;
+import com.example.aisearch.support.k8s.ElasticPasswordProvider;
+import com.example.aisearch.support.k8s.K8sPortForwarder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

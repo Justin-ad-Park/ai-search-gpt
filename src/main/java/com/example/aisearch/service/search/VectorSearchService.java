@@ -1,6 +1,7 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.search;
 
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.service.search.strategy.SearchStrategy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

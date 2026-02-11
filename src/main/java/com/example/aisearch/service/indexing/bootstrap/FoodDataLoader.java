@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.indexing.bootstrap;
 
 import com.example.aisearch.model.FoodProduct;
 import com.fasterxml.jackson.core.type.TypeReference;

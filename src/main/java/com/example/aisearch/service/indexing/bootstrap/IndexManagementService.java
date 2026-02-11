@@ -1,7 +1,8 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.indexing.bootstrap;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.aisearch.config.AiSearchProperties;
+import com.example.aisearch.service.embedding.model.EmbeddingService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

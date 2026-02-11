@@ -1,9 +1,10 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.search.strategy;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.service.embedding.model.EmbeddingService;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

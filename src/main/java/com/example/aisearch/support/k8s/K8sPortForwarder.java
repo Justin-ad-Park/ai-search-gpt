@@ -1,4 +1,4 @@
-package com.example.aisearch.support;
+package com.example.aisearch.support.k8s;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

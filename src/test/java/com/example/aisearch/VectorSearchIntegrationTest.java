@@ -1,9 +1,9 @@
 package com.example.aisearch;
 
 import com.example.aisearch.model.SearchHitResult;
-import com.example.aisearch.service.IndexManagementService;
-import com.example.aisearch.service.ProductIndexingService;
-import com.example.aisearch.service.VectorSearchService;
+import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
+import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
+import com.example.aisearch.service.search.VectorSearchService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -33,7 +33,7 @@ class VectorSearchIntegrationTest {
     void reindexSampleData() {
         // 인덱스 재생성 후 샘플 데이터 인덱싱
         indexManagementService.recreateIndex();
-        long indexed = productIndexingService.reindexSampleData();
+        long indexed = productIndexingService.reindexData();
         Assertions.assertTrue(indexed >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
         System.out.println("[INDEXED] total=" + indexed);
     }

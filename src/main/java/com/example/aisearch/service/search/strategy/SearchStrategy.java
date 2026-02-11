@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.search.strategy;
 
 import com.example.aisearch.model.SearchHitResult;
 

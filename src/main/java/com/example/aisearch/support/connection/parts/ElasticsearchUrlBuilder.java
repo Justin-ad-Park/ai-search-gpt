@@ -1,4 +1,4 @@
-package com.example.aisearch.support;
+package com.example.aisearch.support.connection.parts;
 
 import org.springframework.stereotype.Component;
 

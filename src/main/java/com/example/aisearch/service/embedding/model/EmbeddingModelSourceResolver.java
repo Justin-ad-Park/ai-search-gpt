@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.embedding.model;
 
 import com.example.aisearch.config.AiSearchProperties;
 import org.slf4j.Logger;

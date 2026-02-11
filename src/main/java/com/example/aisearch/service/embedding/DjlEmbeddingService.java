@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.embedding;
 
 import ai.djl.Application;
 import ai.djl.MalformedModelException;
@@ -9,6 +9,10 @@ import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import com.example.aisearch.config.AiSearchProperties;
+import com.example.aisearch.service.embedding.model.EmbeddingModelSource;
+import com.example.aisearch.service.embedding.model.EmbeddingModelSourceResolver;
+import com.example.aisearch.service.embedding.model.EmbeddingNormalizer;
+import com.example.aisearch.service.embedding.model.EmbeddingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.core.io.ResourceLoader;

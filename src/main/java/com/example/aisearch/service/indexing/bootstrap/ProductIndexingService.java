@@ -1,7 +1,8 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.indexing.bootstrap;
 
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.FoodProduct;
+import com.example.aisearch.service.embedding.model.EmbeddingService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class ProductIndexingService {
         this.bulkIndexingExecutor = bulkIndexingExecutor;
     }
 
-    public long reindexSampleData() {
+    public long reindexData() {
         // 샘플 데이터 로딩
         List<FoodProduct> foods = foodDataLoader.loadAll();
         if (foods.isEmpty()) {

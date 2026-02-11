@@ -1,5 +1,7 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.indexing;
 
+import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
+import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -32,7 +34,7 @@ public class BootstrapIndexer implements CommandLineRunner {
     public void run(String... args) {
         // 애플리케이션 시작 직후 인덱스를 재생성하고 샘플 데이터를 색인
         indexManagementService.recreateIndex();
-        long count = productIndexingService.reindexSampleData();
+        long count = productIndexingService.reindexData();
         log.info("Indexed {} documents into Elasticsearch", count);
 
         // 배치 작업 완료 후 애플리케이션 종료

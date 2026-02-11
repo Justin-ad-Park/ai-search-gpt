@@ -1,4 +1,4 @@
-package com.example.aisearch.support;
+package com.example.aisearch.support.k8s;
 
 import java.io.BufferedReader;
 import java.io.IOException;

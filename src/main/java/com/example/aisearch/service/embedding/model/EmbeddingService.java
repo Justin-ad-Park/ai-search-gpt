@@ -1,4 +1,4 @@
-package com.example.aisearch.service;
+package com.example.aisearch.service.embedding.model;
 
 public interface EmbeddingService {
 
