@@ -14,6 +14,7 @@ import jakarta.annotation.PreDestroy;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
+import java.io.Console;
 import java.io.IOException;
 
 /**
@@ -70,6 +71,8 @@ public class DjlEmbeddingService implements EmbeddingService {
         // 차원 수를 구하기 위해 1회 추론 (모델이 몇 차원 벡터를 만드는지 확인)
         float[] probe = predictRaw("한글 식품 벡터 검색 테스트");
         dimensions = probe.length;
+
+        System.out.println("\n\n##dimensions##: " + dimensions);
     }
 
     @Override
