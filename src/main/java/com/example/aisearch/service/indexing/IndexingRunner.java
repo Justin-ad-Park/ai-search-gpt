@@ -13,18 +13,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("indexing")
-@ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
-public class BootstrapIndexer implements CommandLineRunner {
+@ConditionalOnProperty(prefix = "ai-search", name = "run-index", havingValue = "true")
+public class IndexingRunner implements CommandLineRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(BootstrapIndexer.class);
+    private static final Logger log = LoggerFactory.getLogger(IndexingRunner.class);
 
     private final IndexManagementService indexManagementService;
     private final ProductIndexingService productIndexingService;
     private final ConfigurableApplicationContext context;
 
-    public BootstrapIndexer(IndexManagementService indexManagementService,
-                            ProductIndexingService productIndexingService,
-                            ConfigurableApplicationContext context) {
+    public IndexingRunner(IndexManagementService indexManagementService,
+                          ProductIndexingService productIndexingService,
+                          ConfigurableApplicationContext context) {
         this.indexManagementService = indexManagementService;
         this.productIndexingService = productIndexingService;
         this.context = context;

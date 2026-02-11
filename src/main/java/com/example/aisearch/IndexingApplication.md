@@ -19,7 +19,7 @@
 ```
 
 - `indexing` 프로파일이 활성화되면 `application-indexing.yml`이 적용됩니다.
-- 이 설정에는 `ai-search.bootstrap-index: true`와 `spring.main.web-application-type: none`이 포함됩니다.
+- 이 설정에는 `ai-search.run-index: true`와 `spring.main.web-application-type: none`이 포함됩니다.
 
 ---
 
@@ -34,7 +34,7 @@ Spring Boot는 애플리케이션 시작 시점에:
 
 등을 모두 합쳐 **최종 설정(Environment)** 을 만듭니다.
 
-따라서 `ai-search.bootstrap-index=true`가 **정상적으로 반영**됩니다.
+따라서 `ai-search.run-index=true`가 **정상적으로 반영**됩니다.
 
 ---
 
@@ -44,11 +44,11 @@ Spring Boot는 애플리케이션 시작 시점에:
 
 ```java
 @Profile("indexing")
-@ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
+@ConditionalOnProperty(prefix = "ai-search", name = "run-index", havingValue = "true")
 ```
 
 뜻:
-> 환경 설정에 `ai-search.bootstrap-index=true`가 있으면  
+> 환경 설정에 `ai-search.run-index=true`가 있으면  
 > BootstrapIndexer를 실행한다.
 
 ---
@@ -73,7 +73,7 @@ long count = productIndexingService.reindexSampleData();
 ```java
 @Component
 @Profile("indexing")
-@ConditionalOnProperty(prefix = "ai-search", name = "bootstrap-index", havingValue = "true")
+@ConditionalOnProperty(prefix = "ai-search", name = "run-index", havingValue = "true")
 public class BootstrapIndexer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(BootstrapIndexer.class);
