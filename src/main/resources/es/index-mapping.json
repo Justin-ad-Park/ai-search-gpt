@@ -1,15 +1,52 @@
 {
   "settings": {
     "number_of_shards": 1,
-    "number_of_replicas": 0
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "ko_pos_filter": {
+          "type": "nori_part_of_speech",
+          "stoptags": [
+            "E",
+            "IC",
+            "J",
+            "MAG",
+            "MAJ",
+            "MM",
+            "SP",
+            "SSC",
+            "SSO",
+            "SC",
+            "SE",
+            "XPN",
+            "XSA",
+            "XSN",
+            "XSV"
+          ]
+        }
+      },
+      "analyzer": {
+        "ko_mall_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": ["lowercase", "ko_pos_filter"]
+        }
+      }
+    }
   },
   "mappings": {
     "properties": {
       "id": {"type": "keyword"},
-      "product_name": {"type": "text"},
+      "product_name": {
+        "type": "text",
+        "analyzer": "ko_mall_analyzer"
+      },
       "category": {"type": "keyword"},
       "categoryId": {"type": "integer"},
-      "description": {"type": "text"},
+      "description": {
+        "type": "text",
+        "analyzer": "ko_mall_analyzer"
+      },
       "price": {"type": "integer"},
       "product_vector": {
         "type": "dense_vector",

@@ -22,12 +22,12 @@ public class IndexSchemaBuilder {
 
     public String buildMapping(int vectorDimensions) {
         // vectorDimensions는 임베딩 벡터 차원수
-        String template = loadTemplate();
+        String template = loadTemplate(MAPPING_TEMPLATE);
         return template.replace(DIMS_PLACEHOLDER, String.valueOf(vectorDimensions));
     }
 
-    private String loadTemplate() {
-        Resource resource = resourceLoader.getResource(MAPPING_TEMPLATE);
+    private String loadTemplate(String mappingTemplate) {
+        Resource resource = resourceLoader.getResource(mappingTemplate);
         try (InputStream inputStream = resource.getInputStream()) {
             byte[] bytes = inputStream.readAllBytes();
             return new String(bytes, StandardCharsets.UTF_8);

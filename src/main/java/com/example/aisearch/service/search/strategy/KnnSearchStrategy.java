@@ -55,9 +55,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
         Query filterQuery = filterQueryBuilder.buildFilterQuery(request);
-        Query baseQuery = (filterQuery == null)
-                ? Query.of(q -> q.matchAll(m -> m))
-                : filterQuery;
+        Query baseQuery = buildHybridBaseQuery(request, filterQuery);
 
         SearchResponse<Map> response = client.search(s -> s
                         .index(properties.indexName())
@@ -65,7 +63,11 @@ public class KnnSearchStrategy implements SearchStrategy {
                                 .query(baseQuery)
                                 .script(sc -> sc.inline(i -> i
                                         .lang("painless")
-                                        .source("(cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0")
+                                        .source(
+                                                "double vectorScore = (cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0; " +
+                                                "double lexicalScore = Math.min(_score, 5.0) / 5.0; " +
+                                                "return Math.min(1.0, 0.9 * vectorScore + 0.1 * lexicalScore + 0.1);"
+                                        )
                                         .params("query_vector", JsonData.of(queryVector))
                                 ))
                         ))
@@ -95,6 +97,22 @@ public class KnnSearchStrategy implements SearchStrategy {
         );
         List<SearchHitResult> results = toResults(response, false);
         return SearchPageResult.of(request, extractTotalHits(response), results);
+    }
+
+    private Query buildHybridBaseQuery(SearchRequest request, Query filterQuery) {
+        Query lexicalQuery = Query.of(q -> q.multiMatch(mm -> mm
+                .query(request.query())
+                .fields("product_name^2", "description")
+        ));
+
+        return Query.of(q -> q.bool(b -> {
+            if (filterQuery != null) {
+                b.filter(filterQuery);
+            }
+            b.should(lexicalQuery);
+            b.minimumShouldMatch("0");
+            return b;
+        }));
     }
 
     private List<SearchHitResult> toResults(SearchResponse<Map> response, boolean applyScoreThreshold) {

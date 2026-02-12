@@ -32,3 +32,6 @@ GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,2,3&minPr
 
 ### 페이지 이동 예시 (동일 조건 2페이지)
 GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&page=2&size=5&sort=PRICE_ASC
+
+### 한글 형태소(조사 포함) 검색 예시
+GET http://localhost:8080/api/search?q=어린이가%20먹을%20간식을%20추천해줘&page=1&size=5&sort=RELEVANCE_DESC

@@ -11,10 +11,12 @@
 
 ## 빠른 시작
 1. `./sh_bin/00_2_install_eck_operator.sh` (1회성)
-2. `./sh_bin/00_3_start_elasticsearch_cluster.sh` (초기/재구성 시)
-3. `./sh_bin/00_4_prepare_djl_truststore.sh` (1회성)
-4. `./sh_bin/01_check_elasticsearch_status.sh`
-5. `./sh_bin/02_generate_sample_data.sh`
-6. `./sh_bin/04_run_vector_search_test_local.sh`
+2. `./sh_bin/00_3_build_elasticsearch_nori_image.sh` (1회성)
+3. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_4_push_elasticsearch_nori_image.sh` (선택)
+4. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_5_start_elasticsearch_cluster_custom_image.sh`
+5. `./sh_bin/10_1_prepare_djl_truststore.sh` (1회성)
+6. `./sh_bin/01_check_elasticsearch_status.sh`
+7. `./sh_bin/02_generate_sample_data.sh`
+8. `./sh_bin/04_run_vector_search_test_local.sh`
 
 상세 절차는 `sh_bin/readme.md` 참고.

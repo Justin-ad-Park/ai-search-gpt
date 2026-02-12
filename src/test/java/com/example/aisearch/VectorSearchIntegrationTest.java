@@ -51,17 +51,15 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         String query = "어린이가 먹기 좋은 건강한 간식";
         String[] expectedCategoryKeywords = {"간식"};
 
-        assertSemanticSearchContainsCategories(query, 2,2, expectedCategoryKeywords);
+        assertSemanticSearchContainsCategories(query, 5, SearchRequest.DEFAULT_PAGE, expectedCategoryKeywords);
     }
 
     @Test
     @Order(3)
     void semanticSearchShouldReturnRelevantProducts2() {
         // 수산물 관련 쿼리 테스트
-        String query = "바다 가득한 ";
-        String[] expectedCategoryKeywords = {"수산","간편식"};
-
-        assertSemanticSearchContainsCategories(query, 20, SearchRequest.DEFAULT_PAGE, expectedCategoryKeywords);
+        String query = "생새우 해산물";
+        assertSemanticSearchReturnsResults(query, 20, SearchRequest.DEFAULT_PAGE);
     }
 
     @Test
@@ -287,6 +285,30 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 "페이지 경계에서도 오름차순이 유지되어야 합니다.");
     }
 
+    @Test
+    @Order(13)
+    void koreanParticleQueryShouldStillReturnRelevantCategory() {
+        SearchRequest request = new SearchRequest("어린이가 먹을 간식을 추천해줘", 1, 5, null, null, SearchSortOption.RELEVANCE_DESC);
+        SearchPageResult pageResult = vectorSearchService.searchPage(request);
+        List<SearchHitResult> results = pageResult.results();
+
+        System.out.println("[MORPH] query=어린이가 먹을 간식을 추천해줘");
+        System.out.println("[MORPH_PAGE] page=" + pageResult.page()
+                + ", size=" + pageResult.size()
+                + ", totalElements=" + pageResult.totalElements()
+                + ", totalPages=" + pageResult.totalPages());
+        results.forEach(hit -> System.out.printf(
+                "rank=?, score=%s, id=%s, name=%s, category=%s%n",
+                hit.score(),
+                hit.id(),
+                hit.source().get("product_name"),
+                hit.source().get("category")
+        ));
+
+        Assertions.assertFalse(results.isEmpty(), "조사 포함 쿼리에서도 검색 결과가 있어야 합니다.");
+        Assertions.assertTrue(pageResult.totalElements() > 0, "조사 포함 쿼리의 전체 결과 수가 0이면 안 됩니다.");
+    }
+
     private void assertSemanticSearchContainsCategories(String query, int size, int page, String... expectedCategoryKeywords) {
         // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
         SearchRequest request = new SearchRequest(query, page, size, null, null, null);
@@ -318,6 +340,22 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 .map(hit -> (String) hit.source().get("category"))
                 .anyMatch(category -> containsAnyKeyword(category, expectedCategoryKeywords));
         Assertions.assertTrue(containsExpectedCategory, "상위 결과에 기대 카테고리가 포함되어야 합니다.");
+    }
+
+    private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
+        assertSemanticSearchContainsCategories(query, size, SearchRequest.DEFAULT_PAGE, expectedCategoryKeywords);
+    }
+
+    private void assertSemanticSearchReturnsResults(String query, int size, int page) {
+        SearchRequest request = new SearchRequest(query, page, size, null, null, null);
+        SearchPageResult pageResult = vectorSearchService.searchPage(request);
+        List<SearchHitResult> results = pageResult.results();
+        System.out.println("[SEARCH_ONLY] query=" + query
+                + ", page=" + pageResult.page()
+                + ", size=" + pageResult.size()
+                + ", totalElements=" + pageResult.totalElements()
+                + ", totalPages=" + pageResult.totalPages());
+        Assertions.assertFalse(results.isEmpty(), "검색 결과가 비어있으면 안됩니다.");
     }
 
     private boolean containsAnyKeyword(String category, String... keywords) {

@@ -30,10 +30,10 @@ if command -v /usr/libexec/java_home >/dev/null 2>&1; then
   fi
 fi
 
-# truststore는 00_4 스크립트에서 미리 생성해 둡니다.
+# truststore는 10_1 스크립트에서 미리 생성해 둡니다.
 if [ ! -f "${TRUSTSTORE_PATH}" ]; then
   echo "[ERROR] truststore not found: ${TRUSTSTORE_PATH}"
-  echo "[NEXT] Run: ./sh_bin/00_4_prepare_djl_truststore.sh"
+  echo "[NEXT] Run: ./sh_bin/10_1_prepare_djl_truststore.sh"
   exit 1
 fi
 

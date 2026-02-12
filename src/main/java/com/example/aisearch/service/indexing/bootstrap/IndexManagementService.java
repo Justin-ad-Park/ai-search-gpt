@@ -10,7 +10,6 @@ import java.io.StringReader;
 
 @Service
 public class IndexManagementService {
-
     private final ElasticsearchClient esClient;
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
@@ -39,8 +38,6 @@ public class IndexManagementService {
 
             // 임베딩 차원을 반영한 매핑 생성 (dims는 모델 차원과 반드시 일치해야 함)
             String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions());
-
-            // 새 인덱스 생성
             esClient.indices().create(c -> c
                     .index(indexName)
                     .withJson(new StringReader(mapping))
