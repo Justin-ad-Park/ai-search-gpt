@@ -3,12 +3,13 @@ package com.example.aisearch.service.search.strategy;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.JsonData;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
-import com.example.aisearch.service.search.sort.SearchResultSorter;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -23,27 +24,24 @@ public class KnnSearchStrategy implements SearchStrategy {
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final SearchFilterQueryBuilder filterQueryBuilder;
-    private final SearchResultSorter searchResultSorter;
 
     public KnnSearchStrategy(
             ElasticsearchClient client,
             AiSearchProperties properties,
             EmbeddingService embeddingService,
-            SearchFilterQueryBuilder filterQueryBuilder,
-            SearchResultSorter searchResultSorter
+            SearchFilterQueryBuilder filterQueryBuilder
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.filterQueryBuilder = filterQueryBuilder;
-        this.searchResultSorter = searchResultSorter;
     }
 
     @Override
-    public List<SearchHitResult> search(SearchRequest searchRequest) {
+    public SearchPageResult search(SearchRequest searchRequest) {
         try {
             if (searchRequest.hasQuery()) {
-                return knnSearch(searchRequest);
+                return vectorScoreSearch(searchRequest);
             }
             return filterOnlySearch(searchRequest);
         } catch (IOException e) {
@@ -51,48 +49,52 @@ public class KnnSearchStrategy implements SearchStrategy {
         }
     }
 
-    private List<SearchHitResult> knnSearch(SearchRequest request) throws IOException {
+    private SearchPageResult vectorScoreSearch(SearchRequest request) throws IOException {
         int size = request.size();
+        int from = request.from();
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
-        long numCandidates = Math.max(
-                (long) size * properties.numCandidatesMultiplier(),
-                properties.numCandidatesMin()
-        );
         Query filterQuery = filterQueryBuilder.buildFilterQuery(request);
+        Query baseQuery = (filterQuery == null)
+                ? Query.of(q -> q.matchAll(m -> m))
+                : filterQuery;
 
-        SearchResponse<Map> response = client.search(s -> {
-                    s.index(properties.indexName());
-                    s.size(size);
-                    s.knn(knn -> {
-                        knn.field("product_vector");
-                        knn.queryVector(queryVector);
-                        knn.k((long) size);
-                        knn.numCandidates(numCandidates);
-                        if (filterQuery != null) {
-                            knn.filter(filterQuery);
-                        }
-                        return knn;
-                    });
-                    return s;
-                },
+        SearchResponse<Map> response = client.search(s -> s
+                        .index(properties.indexName())
+                        .query(q -> q.scriptScore(ss -> ss
+                                .query(baseQuery)
+                                .script(sc -> sc.inline(i -> i
+                                        .lang("painless")
+                                        .source("(cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0")
+                                        .params("query_vector", JsonData.of(queryVector))
+                                ))
+                        ))
+                        .sort(request.sortOption().toSortOptions())
+                        .trackScores(true)
+                        .from(from)
+                        .size(size)
+                        .minScore(properties.minScoreThreshold()),
                 Map.class
         );
         List<SearchHitResult> results = toResults(response, true);
-        return searchResultSorter.sort(request, results);
+        return SearchPageResult.of(request, extractTotalHits(response), results);
     }
 
-    private List<SearchHitResult> filterOnlySearch(SearchRequest request) throws IOException {
+    private SearchPageResult filterOnlySearch(SearchRequest request) throws IOException {
         int size = request.size();
+        int from = request.from();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
                         .index(properties.indexName())
                         .query(rootQuery)
+                        .sort(request.sortOption().toSortOptions())
+                        .trackScores(true)
+                        .from(from)
                         .size(size),
                 Map.class
         );
         List<SearchHitResult> results = toResults(response, false);
-        return searchResultSorter.sort(request, results);
+        return SearchPageResult.of(request, extractTotalHits(response), results);
     }
 
     private List<SearchHitResult> toResults(SearchResponse<Map> response, boolean applyScoreThreshold) {
@@ -115,6 +117,13 @@ public class KnnSearchStrategy implements SearchStrategy {
         Map<String, Object> filtered = new java.util.HashMap<>(source);
         filtered.remove("product_vector");
         return filtered;
+    }
+
+    private long extractTotalHits(SearchResponse<Map> response) {
+        if (response.hits() == null || response.hits().total() == null) {
+            return 0L;
+        }
+        return response.hits().total().value();
     }
 
     private List<Float> toFloatList(float[] array) {

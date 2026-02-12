@@ -1,6 +1,7 @@
 package com.example.aisearch;
 
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
@@ -50,7 +51,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         String query = "어린이가 먹기 좋은 건강한 간식";
         String[] expectedCategoryKeywords = {"간식"};
 
-        assertSemanticSearchContainsCategories(query, 5, expectedCategoryKeywords);
+        assertSemanticSearchContainsCategories(query, 2,2, expectedCategoryKeywords);
     }
 
     @Test
@@ -60,7 +61,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         String query = "바다 가득한 ";
         String[] expectedCategoryKeywords = {"수산","간편식"};
 
-        assertSemanticSearchContainsCategories(query, 20, expectedCategoryKeywords);
+        assertSemanticSearchContainsCategories(query, 20, SearchRequest.DEFAULT_PAGE, expectedCategoryKeywords);
     }
 
     @Test
@@ -248,11 +249,55 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         Assertions.assertEquals(explicitIds, defaultIds, "정렬 미지정 시 기본값은 연관도 정렬이어야 합니다.");
     }
 
-    private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
+    @Test
+    @Order(12)
+    void pageAndSizeShouldReturnStableSlicesInEngineSort() {
+        SearchRequest page1Request = new SearchRequest(
+                "간식",
+                1,
+                5,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3),
+                SearchSortOption.PRICE_ASC
+        );
+        SearchRequest page2Request = new SearchRequest(
+                "간식",
+                2,
+                5,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3),
+                SearchSortOption.PRICE_ASC
+        );
+
+        List<SearchHitResult> page1Results = vectorSearchService.search(page1Request);
+        List<SearchHitResult> page2Results = vectorSearchService.search(page2Request);
+
+        Assertions.assertFalse(page1Results.isEmpty(), "1페이지 결과가 필요합니다.");
+        Assertions.assertFalse(page2Results.isEmpty(), "2페이지 결과가 필요합니다.");
+
+        List<String> page1Ids = page1Results.stream().map(SearchHitResult::id).toList();
+        List<String> page2Ids = page2Results.stream().map(SearchHitResult::id).toList();
+        Assertions.assertTrue(page1Ids.stream().noneMatch(page2Ids::contains), "페이지 간 결과 ID는 중복되면 안 됩니다.");
+
+        List<Integer> page1Prices = extractPrices(page1Results);
+        List<Integer> page2Prices = extractPrices(page2Results);
+        assertNonDecreasing(page1Prices);
+        assertNonDecreasing(page2Prices);
+        Assertions.assertTrue(page1Prices.get(page1Prices.size() - 1) <= page2Prices.get(0),
+                "페이지 경계에서도 오름차순이 유지되어야 합니다.");
+    }
+
+    private void assertSemanticSearchContainsCategories(String query, int size, int page, String... expectedCategoryKeywords) {
         // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
-        List<SearchHitResult> results = vectorSearchService.search(query, size);
+        SearchRequest request = new SearchRequest(query, page, size, null, null, null);
+        SearchPageResult pageResult = vectorSearchService.searchPage(request);
+        List<SearchHitResult> results = pageResult.results();
 
         System.out.println("[SEARCH] query=" + query);
+        System.out.println("[PAGE] page=" + pageResult.page()
+                + ", size=" + pageResult.size()
+                + ", totalElements=" + pageResult.totalElements()
+                + ", totalPages=" + pageResult.totalPages());
         for (int i = 0; i < results.size(); i++) {
             SearchHitResult hit = results.get(i);
             System.out.println("rank=" + (i + 1)

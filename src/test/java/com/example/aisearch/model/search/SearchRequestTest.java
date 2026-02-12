@@ -13,6 +13,7 @@ class SearchRequestTest {
         SearchRequest request = new SearchRequest("  간식  ", null, null, null);
 
         assertEquals("간식", request.query());
+        assertEquals(SearchRequest.DEFAULT_PAGE, request.page());
         assertEquals(SearchRequest.DEFAULT_SIZE, request.size());
         assertEquals(SearchSortOption.RELEVANCE_DESC, request.sortOption());
         assertTrue(request.hasQuery());
@@ -20,8 +21,10 @@ class SearchRequestTest {
 
     @Test
     void shouldUseExplicitSortOption() {
-        SearchRequest request = new SearchRequest("간식", 5, null, null, SearchSortOption.PRICE_ASC);
+        SearchRequest request = new SearchRequest("간식", 2, 5, null, null, SearchSortOption.PRICE_ASC);
+        assertEquals(2, request.page());
         assertEquals(SearchSortOption.PRICE_ASC, request.sortOption());
+        assertEquals(5, request.from());
     }
 
     @Test
@@ -41,5 +44,14 @@ class SearchRequestTest {
                 () -> new SearchPrice(10000, 1000)
         );
         assertTrue(ex.getMessage().contains("minPrice"));
+    }
+
+    @Test
+    void shouldRejectInvalidPage() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> new SearchRequest("간식", 0, 5, null, List.of(1), SearchSortOption.RELEVANCE_DESC)
+        );
+        assertTrue(ex.getMessage().contains("page"));
     }
 }

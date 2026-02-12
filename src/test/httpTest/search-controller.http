@@ -1,27 +1,34 @@
 ### SearchController sample
-# 기본 검색 (size 기본값=5)
+# 기본 검색 (page=1, size 기본값=5)
 GET http://localhost:8080/api/search?q=어린이%20간식
 
 ### size 지정 검색
-GET http://localhost:8080/api/search?q=바다%20가득한%20해산물&size=2
+GET http://localhost:8080/api/search?q=바다%20가득한%20해산물&page=1&size=2
 
 ### 다양한 키워드 예시
-GET http://localhost:8080/api/search?q=저당%20간식
+GET http://localhost:8080/api/search?q=저당%20간식&page=1&sort=RELEVANCE_DESC
+
+### 페이징
+GET http://localhost:8080/api/search?q=저당%20간식&page=2&size=2
+
 
 ### 카테고리 OR 검색 (categoryId=1,2,3)
-GET http://localhost:8080/api/search?categoryId=1,2,3&size=10
+GET http://localhost:8080/api/search?categoryId=1,2,3&page=1&size=10
 
 ### 가격 범위 검색 (5000~15000)
-GET http://localhost:8080/api/search?minPrice=5000&maxPrice=15000&size=10
+GET http://localhost:8080/api/search?minPrice=5000&maxPrice=15000&page=1&size=10
 
 ### 키워드 + 카테고리 + 가격 범위 조합 검색
-GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,3&minPrice=5000&maxPrice=30000&size=10
+GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,3&minPrice=5000&maxPrice=30000&page=1&size=10
 
 ### 가격 낮은순 정렬
-GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&size=10&sort=PRICE_ASC
+GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&page=1&size=10&sort=PRICE_ASC
 
 ### 가격 높은순 정렬
-GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&size=10&sort=PRICE_DESC
+GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&page=1&size=10&sort=PRICE_DESC
 
 ### 연관 높은순 정렬 (기본값과 동일)
-GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&size=10&sort=RELEVANCE_DESC
+GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&page=1&size=10&sort=RELEVANCE_DESC
+
+### 페이지 이동 예시 (동일 조건 2페이지)
+GET http://localhost:8080/api/search?q=간식&categoryId=1,2,3&minPrice=0&maxPrice=30000&page=2&size=5&sort=PRICE_ASC
