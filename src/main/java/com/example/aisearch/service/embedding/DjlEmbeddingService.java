@@ -50,6 +50,7 @@ public class DjlEmbeddingService implements EmbeddingService {
         EmbeddingModelSource modelSource = modelSourceResolver.load();
         if (modelSource.isPathBased()) {
             criteria.optModelPath(modelSource.modelPath());
+
             if (modelSource.requiresTranslatorFactory()) {
                 criteria.optTranslatorFactory(new ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory());
             }
