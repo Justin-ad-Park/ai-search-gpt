@@ -23,6 +23,11 @@
             "XSN",
             "XSV"
           ]
+        },
+        "ko_synonym_filter": {
+          "type": "synonym_graph",
+          "synonyms_set": "__SYNONYMS_SET_ID__",
+          "updateable": true
         }
       },
       "analyzer": {
@@ -30,6 +35,11 @@
           "type": "custom",
           "tokenizer": "nori_tokenizer",
           "filter": ["lowercase", "ko_pos_filter"]
+        },
+        "ko_mall_search_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": ["lowercase", "ko_synonym_filter", "ko_pos_filter"]
         }
       }
     }
@@ -39,13 +49,15 @@
       "id": {"type": "keyword"},
       "product_name": {
         "type": "text",
-        "analyzer": "ko_mall_analyzer"
+        "analyzer": "ko_mall_analyzer",
+        "search_analyzer": "ko_mall_search_analyzer"
       },
       "category": {"type": "keyword"},
       "categoryId": {"type": "integer"},
       "description": {
         "type": "text",
-        "analyzer": "ko_mall_analyzer"
+        "analyzer": "ko_mall_analyzer",
+        "search_analyzer": "ko_mall_search_analyzer"
       },
       "price": {"type": "integer"},
       "product_vector": {

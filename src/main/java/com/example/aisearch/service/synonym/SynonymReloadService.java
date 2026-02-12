@@ -1,0 +1,66 @@
+package com.example.aisearch.service.synonym;
+
+import com.example.aisearch.config.AiSearchProperties;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class SynonymReloadService {
+
+    private static final String SUCCESS_MESSAGE = "synonyms reloaded successfully";
+
+    private final AiSearchProperties properties;
+    private final SynonymRuleSource synonymRuleSource;
+    private final SynonymEsGateway synonymEsGateway;
+
+    public SynonymReloadService(
+            AiSearchProperties properties,
+            SynonymRuleSource synonymRuleSource,
+            SynonymEsGateway synonymEsGateway
+    ) {
+        this.properties = properties;
+        this.synonymRuleSource = synonymRuleSource;
+        this.synonymEsGateway = synonymEsGateway;
+    }
+
+    public SynonymReloadResult reload(SynonymReloadRequest request) {
+        SynonymReloadMode mode = request.mode() == null ? SynonymReloadMode.PRODUCTION : request.mode();
+        String indexName = resolveRequired(request.index(), properties.indexName(), "index");
+        String synonymsSet = resolveRequired(request.synonymsSet(), properties.synonymsSet(), "synonymsSet");
+        List<String> rules = synonymRuleSource.loadRules(mode);
+        if (rules.isEmpty()) {
+            throw new IllegalArgumentException("동의어 규칙이 비어 있습니다. mode=" + mode);
+        }
+
+        synonymEsGateway.putSynonyms(synonymsSet, rules);
+        synonymEsGateway.reloadSearchAnalyzers(indexName);
+
+        return new SynonymReloadResult(
+                true,
+                true,
+                mode.name(),
+                synonymsSet,
+                indexName,
+                rules.size(),
+                SUCCESS_MESSAGE
+        );
+    }
+
+    public void ensureProductionSynonymsSet() {
+        String synonymsSet = resolveRequired(null, properties.synonymsSet(), "synonymsSet");
+        List<String> rules = synonymRuleSource.loadRules(SynonymReloadMode.PRODUCTION);
+        if (rules.isEmpty()) {
+            throw new IllegalArgumentException("운영 동의어 규칙이 비어 있습니다.");
+        }
+        synonymEsGateway.putSynonyms(synonymsSet, rules);
+    }
+
+    private String resolveRequired(String requestValue, String propertyValue, String fieldName) {
+        String resolved = (requestValue == null || requestValue.isBlank()) ? propertyValue : requestValue;
+        if (resolved == null || resolved.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " 값이 비어 있습니다.");
+        }
+        return resolved;
+    }
+}

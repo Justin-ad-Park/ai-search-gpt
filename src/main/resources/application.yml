@@ -7,6 +7,9 @@ ai-search:
   username: ${AI_SEARCH_ES_USERNAME:elastic}
   password: ${AI_SEARCH_ES_PASSWORD:password}
   index-name: ${AI_SEARCH_ES_INDEX:food-products-v1-test}
+  synonyms-set: ${AI_SEARCH_SYNONYMS_SET:food-synonyms}
+  synonyms-file-path: ${AI_SEARCH_SYNONYMS_FILE_PATH:classpath:es/dictionary/synonyms_ko.txt}
+  synonyms-regression-file-path: ${AI_SEARCH_SYNONYMS_REGRESSION_FILE_PATH:classpath:es/dictionary/synonyms_kr_regression.txt}
   ## **  embedding-model-path 우선 적용하며, 없으면 model-url 사용함  **
   embedding-model-path: ${AI_SEARCH_EMBED_MODEL_PATH:classpath:/model/multilingual-e5-small-ko-v2}
   embedding-model-url: ${AI_SEARCH_EMBED_MODEL:djl://ai.djl.huggingface.pytorch/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}

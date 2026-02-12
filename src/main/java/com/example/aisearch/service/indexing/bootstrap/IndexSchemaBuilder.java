@@ -13,6 +13,7 @@ public class IndexSchemaBuilder {
 
     private static final String MAPPING_TEMPLATE = "classpath:es/index-mapping.json";
     private static final String DIMS_PLACEHOLDER = "__DIMS__";
+    private static final String SYNONYMS_SET_PLACEHOLDER = "__SYNONYMS_SET_ID__";
 
     private final ResourceLoader resourceLoader;
 
@@ -20,10 +21,12 @@ public class IndexSchemaBuilder {
         this.resourceLoader = resourceLoader;
     }
 
-    public String buildMapping(int vectorDimensions) {
+    public String buildMapping(int vectorDimensions, String synonymsSetId) {
         // vectorDimensions는 임베딩 벡터 차원수
         String template = loadTemplate(MAPPING_TEMPLATE);
-        return template.replace(DIMS_PLACEHOLDER, String.valueOf(vectorDimensions));
+        return template
+                .replace(DIMS_PLACEHOLDER, String.valueOf(vectorDimensions))
+                .replace(SYNONYMS_SET_PLACEHOLDER, synonymsSetId);
     }
 
     private String loadTemplate(String mappingTemplate) {

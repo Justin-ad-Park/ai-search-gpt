@@ -3,6 +3,7 @@ package com.example.aisearch.service.indexing.bootstrap;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.synonym.SynonymReloadService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -14,17 +15,20 @@ public class IndexManagementService {
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final IndexSchemaBuilder indexSchemaBuilder;
+    private final SynonymReloadService synonymReloadService;
 
     public IndexManagementService(
             ElasticsearchClient esClient,
             AiSearchProperties properties,
             EmbeddingService embeddingService,
-            IndexSchemaBuilder indexSchemaBuilder
+            IndexSchemaBuilder indexSchemaBuilder,
+            SynonymReloadService synonymReloadService
     ) {
         this.esClient = esClient;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.indexSchemaBuilder = indexSchemaBuilder;
+        this.synonymReloadService = synonymReloadService;
     }
 
     public void recreateIndex() {
@@ -36,8 +40,10 @@ public class IndexManagementService {
                 esClient.indices().delete(d -> d.index(indexName));
             }
 
+            synonymReloadService.ensureProductionSynonymsSet();
+
             // 임베딩 차원을 반영한 매핑 생성 (dims는 모델 차원과 반드시 일치해야 함)
-            String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions());
+            String mapping = indexSchemaBuilder.buildMapping(embeddingService.dimensions(), properties.synonymsSet());
             esClient.indices().create(c -> c
                     .index(indexName)
                     .withJson(new StringReader(mapping))

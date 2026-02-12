@@ -15,6 +15,18 @@ public record AiSearchProperties(
      */
     String indexName,
     /**
+     * 동의어 세트 ID
+     */
+    String synonymsSet,
+    /**
+     * 운영 동의어 파일 경로
+     */
+    String synonymsFilePath,
+    /**
+     * 회귀 테스트 동의어 파일 경로
+     */
+    String synonymsRegressionFilePath,
+    /**
      * 임베딩 모델 위치 (DJL 지원 URL)
      */
     String embeddingModelUrl,

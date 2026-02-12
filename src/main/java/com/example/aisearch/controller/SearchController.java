@@ -1,19 +1,26 @@
 package com.example.aisearch.controller;
 
+import com.example.aisearch.controller.dto.ReloadSynonymsRequestDto;
+import com.example.aisearch.controller.dto.ReloadSynonymsResponseDto;
 import com.example.aisearch.controller.dto.SearchResponseDto;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.search.VectorSearchService;
+import com.example.aisearch.service.synonym.SynonymReloadRequest;
+import com.example.aisearch.service.synonym.SynonymReloadResult;
+import com.example.aisearch.service.synonym.SynonymReloadService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -22,9 +29,14 @@ import java.util.List;
 public class SearchController {
 
     private final VectorSearchService vectorSearchService;
+    private final SynonymReloadService synonymReloadService;
 
-    public SearchController(VectorSearchService vectorSearchService) {
+    public SearchController(
+            VectorSearchService vectorSearchService,
+            SynonymReloadService synonymReloadService
+    ) {
         this.vectorSearchService = vectorSearchService;
+        this.synonymReloadService = synonymReloadService;
     }
 
     @GetMapping("/api/search")
@@ -62,5 +74,28 @@ public class SearchController {
                 pageResult.results().size(),
                 pageResult.results()
         );
+    }
+
+    @PostMapping("/api/search/reload-synonyms")
+    public ReloadSynonymsResponseDto reloadSynonyms(
+            @RequestBody(required = false) ReloadSynonymsRequestDto requestDto
+    ) {
+        SynonymReloadRequest request;
+        try {
+            request = requestDto == null
+                    ? SynonymReloadRequest.defaultRequest()
+                    : requestDto.toServiceRequest();
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+
+        try {
+            SynonymReloadResult result = synonymReloadService.reload(request);
+            return ReloadSynonymsResponseDto.from(result);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
     }
 }
