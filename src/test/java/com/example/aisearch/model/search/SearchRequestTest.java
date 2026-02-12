@@ -14,7 +14,14 @@ class SearchRequestTest {
 
         assertEquals("간식", request.query());
         assertEquals(SearchRequest.DEFAULT_SIZE, request.size());
+        assertEquals(SearchSortOption.RELEVANCE_DESC, request.sortOption());
         assertTrue(request.hasQuery());
+    }
+
+    @Test
+    void shouldUseExplicitSortOption() {
+        SearchRequest request = new SearchRequest("간식", 5, null, null, SearchSortOption.PRICE_ASC);
+        assertEquals(SearchSortOption.PRICE_ASC, request.sortOption());
     }
 
     @Test

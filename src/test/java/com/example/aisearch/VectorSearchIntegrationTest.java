@@ -3,6 +3,7 @@ package com.example.aisearch;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
 import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
 import com.example.aisearch.service.search.VectorSearchService;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -160,7 +162,8 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 "건강한 간식",
                 10,
                 new SearchPrice(5000, 30000),
-                List.of(1,2,3)
+                List.of(1),
+                SearchSortOption.RELEVANCE_DESC
         );
         List<SearchHitResult> results = vectorSearchService.search(request);
 
@@ -184,6 +187,65 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                     && priceValue >= 5000
                     && priceValue <= 30000;
         }), "모든 결과가 카테고리/가격 조건을 충족해야 합니다.");
+    }
+
+    @Test
+    @Order(9)
+    void priceAscSortShouldOrderByPrice() {
+        SearchRequest request = new SearchRequest(
+                "간식",
+                10,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3),
+                SearchSortOption.PRICE_ASC
+        );
+
+        List<SearchHitResult> results = vectorSearchService.search(request);
+        List<Integer> prices = extractPrices(results);
+        Assertions.assertFalse(prices.isEmpty(), "가격 오름차순 검증을 위한 결과가 필요합니다.");
+        assertNonDecreasing(prices);
+    }
+
+    @Test
+    @Order(10)
+    void priceDescSortShouldOrderByPrice() {
+        SearchRequest request = new SearchRequest(
+                "간식",
+                10,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3),
+                SearchSortOption.PRICE_DESC
+        );
+
+        List<SearchHitResult> results = vectorSearchService.search(request);
+        List<Integer> prices = extractPrices(results);
+        Assertions.assertFalse(prices.isEmpty(), "가격 내림차순 검증을 위한 결과가 필요합니다.");
+        assertNonIncreasing(prices);
+    }
+
+    @Test
+    @Order(11)
+    void defaultSortShouldMatchExplicitRelevanceSort() {
+        SearchRequest defaultSortRequest = new SearchRequest(
+                "건강한 간식",
+                10,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3)
+        );
+        SearchRequest explicitRelevanceRequest = new SearchRequest(
+                "건강한 간식",
+                10,
+                new SearchPrice(0, 30000),
+                List.of(1, 2, 3),
+                SearchSortOption.RELEVANCE_DESC
+        );
+
+        List<SearchHitResult> defaultResults = vectorSearchService.search(defaultSortRequest);
+        List<SearchHitResult> explicitResults = vectorSearchService.search(explicitRelevanceRequest);
+
+        List<String> defaultIds = defaultResults.stream().map(SearchHitResult::id).collect(Collectors.toList());
+        List<String> explicitIds = explicitResults.stream().map(SearchHitResult::id).collect(Collectors.toList());
+        Assertions.assertEquals(explicitIds, defaultIds, "정렬 미지정 시 기본값은 연관도 정렬이어야 합니다.");
     }
 
     private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
@@ -232,6 +294,27 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
             return number.intValue();
         }
         return null;
+    }
+
+    private List<Integer> extractPrices(List<SearchHitResult> results) {
+        return results.stream()
+                .map(hit -> asInteger(hit.source(), "price"))
+                .filter(value -> value != null)
+                .toList();
+    }
+
+    private void assertNonDecreasing(List<Integer> numbers) {
+        for (int i = 1; i < numbers.size(); i++) {
+            Assertions.assertTrue(numbers.get(i - 1) <= numbers.get(i),
+                    "오름차순 위배: " + numbers.get(i - 1) + " > " + numbers.get(i));
+        }
+    }
+
+    private void assertNonIncreasing(List<Integer> numbers) {
+        for (int i = 1; i < numbers.size(); i++) {
+            Assertions.assertTrue(numbers.get(i - 1) >= numbers.get(i),
+                    "내림차순 위배: " + numbers.get(i - 1) + " < " + numbers.get(i));
+        }
     }
 
 }

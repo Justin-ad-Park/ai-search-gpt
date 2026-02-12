@@ -8,6 +8,7 @@ import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
+import com.example.aisearch.service.search.sort.SearchResultSorter;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -22,17 +23,20 @@ public class KnnSearchStrategy implements SearchStrategy {
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final SearchFilterQueryBuilder filterQueryBuilder;
+    private final SearchResultSorter searchResultSorter;
 
     public KnnSearchStrategy(
             ElasticsearchClient client,
             AiSearchProperties properties,
             EmbeddingService embeddingService,
-            SearchFilterQueryBuilder filterQueryBuilder
+            SearchFilterQueryBuilder filterQueryBuilder,
+            SearchResultSorter searchResultSorter
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.filterQueryBuilder = filterQueryBuilder;
+        this.searchResultSorter = searchResultSorter;
     }
 
     @Override
@@ -74,7 +78,8 @@ public class KnnSearchStrategy implements SearchStrategy {
                 },
                 Map.class
         );
-        return toResults(response, true);
+        List<SearchHitResult> results = toResults(response, true);
+        return searchResultSorter.sort(request, results);
     }
 
     private List<SearchHitResult> filterOnlySearch(SearchRequest request) throws IOException {
@@ -86,7 +91,8 @@ public class KnnSearchStrategy implements SearchStrategy {
                         .size(size),
                 Map.class
         );
-        return toResults(response, false);
+        List<SearchHitResult> results = toResults(response, false);
+        return searchResultSorter.sort(request, results);
     }
 
     private List<SearchHitResult> toResults(SearchResponse<Map> response, boolean applyScoreThreshold) {

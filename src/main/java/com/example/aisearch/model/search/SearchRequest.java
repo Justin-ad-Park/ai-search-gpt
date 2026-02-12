@@ -6,7 +6,8 @@ public record SearchRequest(
         String query,
         Integer size,
         SearchPrice searchPrice,
-        List<Integer> categoryIds
+        List<Integer> categoryIds,
+        SearchSortOption sortOption
 ) {
     public static final int DEFAULT_SIZE = 5;
     public static final int MAX_SIZE = 20;
@@ -22,6 +23,12 @@ public record SearchRequest(
         if (categoryIds != null) {
             categoryIds = categoryIds.stream().filter(id -> id != null).distinct().toList();
         }
+
+        sortOption = (sortOption == null) ? SearchSortOption.RELEVANCE_DESC : sortOption;
+    }
+
+    public SearchRequest(String query, Integer size, SearchPrice searchPrice, List<Integer> categoryIds) {
+        this(query, size, searchPrice, categoryIds, null);
     }
 
     public boolean hasQuery() {
