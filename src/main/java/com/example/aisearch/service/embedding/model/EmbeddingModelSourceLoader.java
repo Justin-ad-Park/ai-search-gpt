@@ -22,6 +22,17 @@ public class EmbeddingModelSourceLoader {
         this.properties = properties;
     }
 
+    /**
+     * 임베딩 모델 소스를 결정한다.
+     *
+     * <p>우선순위:
+     * <ol>
+     *   <li>로컬 경로(embedding-model-path)가 유효하면 로컬 모델 사용</li>
+     *   <li>그렇지 않으면 URL(embedding-model-url) 사용</li>
+     * </ol>
+     *
+     * @return 로컬 경로 또는 URL을 담은 {@link EmbeddingModelSource}
+     */
     public EmbeddingModelSource load() throws IOException {
         String modelPath = properties.embeddingModelPath();
         if (modelPath != null && !modelPath.isBlank() && !"__NONE__".equalsIgnoreCase(modelPath.trim())) {

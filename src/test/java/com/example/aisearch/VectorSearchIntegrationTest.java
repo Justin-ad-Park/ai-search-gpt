@@ -16,7 +16,7 @@ import java.util.List;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class VectorSearchIntegrationTest {
+class VectorSearchIntegrationTest extends TruststoreTestBase {
 
 
     @Autowired

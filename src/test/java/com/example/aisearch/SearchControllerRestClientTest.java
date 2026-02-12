@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SearchControllerRestClientTest {
+class SearchControllerRestClientTest extends TruststoreTestBase {
 
     @LocalServerPort
     private int port;

@@ -18,10 +18,10 @@ public class AiSearchGptApplication {
         ./gradlew bootRun
 
     - 색인 + 검색 웹 서버:
-        ./gradlew bootRun --args='--spring.profiles.active=indexing-web'
+        ./gradlew bootRun --args='--spring.profiles.active=indexing-web'  -Djavax.net.ssl.trustStore=/Users/justinpark/.ai-cert/djl-truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit
 
     - 색인만 실행하고 종료:
-        ./gradlew bootRun --args='--spring.profiles.active=indexing'
+        ./gradlew bootRun --args='--spring.profiles.active=indexing'  -Djavax.net.ssl.trustStore=/Users/justinpark/.ai-cert/djl-truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit
 
      */
     public static void main(String[] args) {
