@@ -1,6 +1,8 @@
 package com.example.aisearch;
 
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.model.search.SearchPrice;
+import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
 import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
 import com.example.aisearch.service.search.VectorSearchService;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -105,6 +108,84 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         }
     }
 
+    @Test
+    @Order(6)
+    void categoryFilterShouldReturnOnlyRequestedCategories() {
+        SearchRequest request = new SearchRequest(null, 10, null, List.of(1, 2, 3));
+        List<SearchHitResult> results = vectorSearchService.search(request);
+
+        System.out.println("[CATEGORY_FILTER] categories=1,2,3");
+        results.forEach(hit -> System.out.printf(
+                "id=%s, name=%s, categoryId=%s, price=%s%n",
+                hit.id(),
+                hit.source().get("product_name"),
+                hit.source().get("categoryId"),
+                hit.source().get("price")
+        ));
+
+        Assertions.assertFalse(results.isEmpty(), "카테고리 필터 결과는 비어있으면 안 됩니다.");
+        Assertions.assertTrue(results.stream().allMatch(hit -> {
+            Integer categoryId = asInteger(hit.source(), "categoryId");
+            return categoryId != null && List.of(1, 2, 3).contains(categoryId);
+        }), "모든 결과의 categoryId는 1,2,3 중 하나여야 합니다.");
+    }
+
+    @Test
+    @Order(7)
+    void priceRangeFilterShouldReturnOnlyInRange() {
+        SearchPrice price = new SearchPrice(5000, 15000);
+        SearchRequest request = new SearchRequest(null, 10, price, null);
+        List<SearchHitResult> results = vectorSearchService.search(request);
+
+        System.out.println("[PRICE_FILTER] min=5000, max=15000");
+        results.forEach(hit -> System.out.printf(
+                "id=%s, name=%s, categoryId=%s, price=%s%n",
+                hit.id(),
+                hit.source().get("product_name"),
+                hit.source().get("categoryId"),
+                hit.source().get("price")
+        ));
+
+        Assertions.assertFalse(results.isEmpty(), "가격 범위 필터 결과는 비어있으면 안 됩니다.");
+        Assertions.assertTrue(results.stream().allMatch(hit -> {
+            Integer priceValue = asInteger(hit.source(), "price");
+            return priceValue != null && priceValue >= 5000 && priceValue <= 15000;
+        }), "모든 결과의 price는 5000~15000 범위여야 합니다.");
+    }
+
+    @Test
+    @Order(8)
+    void keywordCategoryAndPriceFilterShouldReturnMatchingResults() {
+        SearchRequest request = new SearchRequest(
+                "건강한 간식",
+                10,
+                new SearchPrice(5000, 30000),
+                List.of(1,2,3)
+        );
+        List<SearchHitResult> results = vectorSearchService.search(request);
+
+        System.out.println("[COMBINED_FILTER] query=건강한 간식, category=1, min=5000, max=30000");
+        results.forEach(hit -> System.out.printf(
+                "id=%s, score=%s, name=%s, categoryId=%s, price=%s%n",
+                hit.id(),
+                hit.score(),
+                hit.source().get("product_name"),
+                hit.source().get("categoryId"),
+                hit.source().get("price")
+        ));
+
+        Assertions.assertFalse(results.isEmpty(), "복합 조건 결과는 비어있으면 안 됩니다.");
+        Assertions.assertTrue(results.stream().allMatch(hit -> {
+            Integer categoryId = asInteger(hit.source(), "categoryId");
+            Integer priceValue = asInteger(hit.source(), "price");
+            return categoryId != null
+                    && categoryId == 1
+                    && priceValue != null
+                    && priceValue >= 5000
+                    && priceValue <= 30000;
+        }), "모든 결과가 카테고리/가격 조건을 충족해야 합니다.");
+    }
+
     private void assertSemanticSearchContainsCategories(String query, int size, String... expectedCategoryKeywords) {
         // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
         List<SearchHitResult> results = vectorSearchService.search(query, size);
@@ -143,6 +224,14 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
             }
         }
         return false;
+    }
+
+    private Integer asInteger(Map<String, Object> source, String key) {
+        Object value = source.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return null;
     }
 
 }

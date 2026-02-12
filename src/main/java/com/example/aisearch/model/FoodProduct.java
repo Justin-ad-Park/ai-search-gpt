@@ -10,15 +10,21 @@ public class FoodProduct {
     private String category;
     // 설명
     private String description;
+    // 가격
+    private Integer price;
+    // 카테고리 ID
+    private Integer categoryId;
 
     public FoodProduct() {
     }
 
-    public FoodProduct(String id, String productName, String category, String description) {
+    public FoodProduct(String id, String productName, String category, String description, Integer price, Integer categoryId) {
         this.id = id;
         this.productName = productName;
         this.category = category;
         this.description = description;
+        this.price = price;
+        this.categoryId = categoryId;
     }
 
     public String getId() {
@@ -51,6 +57,22 @@ public class FoodProduct {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getPrice() {
+        return price;
+    }
+
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+
+    public Integer getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String toEmbeddingText() {

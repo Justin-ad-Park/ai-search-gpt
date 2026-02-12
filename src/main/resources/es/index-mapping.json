@@ -8,7 +8,9 @@
       "id": {"type": "keyword"},
       "product_name": {"type": "text"},
       "category": {"type": "keyword"},
+      "categoryId": {"type": "integer"},
       "description": {"type": "text"},
+      "price": {"type": "integer"},
       "product_vector": {
         "type": "dense_vector",
         "dims": __DIMS__,

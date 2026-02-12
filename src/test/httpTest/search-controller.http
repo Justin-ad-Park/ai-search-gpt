@@ -7,3 +7,12 @@ GET http://localhost:8080/api/search?q=바다%20가득한%20해산물&size=2
 
 ### 다양한 키워드 예시
 GET http://localhost:8080/api/search?q=저당%20간식
+
+### 카테고리 OR 검색 (categoryId=1,2,3)
+GET http://localhost:8080/api/search?categoryId=1,2,3&size=10
+
+### 가격 범위 검색 (5000~15000)
+GET http://localhost:8080/api/search?minPrice=5000&maxPrice=15000&size=10
+
+### 키워드 + 카테고리 + 가격 범위 조합 검색
+GET http://localhost:8080/api/search?q=건강한%20간식&categoryId=1,3&minPrice=5000&maxPrice=30000&size=10

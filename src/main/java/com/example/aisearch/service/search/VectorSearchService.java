@@ -1,6 +1,7 @@
 package com.example.aisearch.service.search;
 
 import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.search.strategy.SearchStrategy;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,11 @@ public class VectorSearchService {
         this.searchStrategy = searchStrategy;
     }
 
+    public List<SearchHitResult> search(SearchRequest searchRequest) {
+        return searchStrategy.search(searchRequest);
+    }
+
     public List<SearchHitResult> search(String query, int size) {
-        return searchStrategy.search(query, size);
+        return search(new SearchRequest(query, size, null, null));
     }
 }

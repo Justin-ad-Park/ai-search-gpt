@@ -15,7 +15,9 @@ public class FoodProductDocumentMapper {
         doc.put("id", food.getId());
         doc.put("product_name", food.getProductName());
         doc.put("category", food.getCategory());
+        doc.put("categoryId", food.getCategoryId());
         doc.put("description", food.getDescription());
+        doc.put("price", food.getPrice());
         doc.put("product_vector", toFloatList(embedding));
         return new IndexDocument(food.getId(), doc);
     }
