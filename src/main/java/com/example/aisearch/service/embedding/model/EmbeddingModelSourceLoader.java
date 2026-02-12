@@ -11,12 +11,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @Component
-public class EmbeddingModelSourceResolver {
+public class EmbeddingModelSourceLoader {
 
-    private static final Logger log = LoggerFactory.getLogger(EmbeddingModelSourceResolver.class);
+    private static final Logger log = LoggerFactory.getLogger(EmbeddingModelSourceLoader.class);
+    private final ResourceLoader resourceLoader;
+    private final AiSearchProperties properties;
 
-    public EmbeddingModelSource resolve(AiSearchProperties properties, ResourceLoader resourceLoader)
-            throws IOException {
+    public EmbeddingModelSourceLoader(ResourceLoader resourceLoader, AiSearchProperties properties) {
+        this.resourceLoader = resourceLoader;
+        this.properties = properties;
+    }
+
+    public EmbeddingModelSource load() throws IOException {
         String modelPath = properties.embeddingModelPath();
         if (modelPath != null && !modelPath.isBlank() && !"__NONE__".equalsIgnoreCase(modelPath.trim())) {
             Resource resource = resourceLoader.getResource(modelPath);

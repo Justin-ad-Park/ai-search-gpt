@@ -8,17 +8,14 @@ import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
-import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.service.embedding.model.EmbeddingModelSource;
-import com.example.aisearch.service.embedding.model.EmbeddingModelSourceResolver;
+import com.example.aisearch.service.embedding.model.EmbeddingModelSourceLoader;
 import com.example.aisearch.service.embedding.model.EmbeddingNormalizer;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
-import java.io.Console;
 import java.io.IOException;
 
 /**
@@ -28,22 +25,16 @@ import java.io.IOException;
 @Service
 public class DjlEmbeddingService implements EmbeddingService {
 
-    private final AiSearchProperties properties;
-    private final ResourceLoader resourceLoader;
-    private final EmbeddingModelSourceResolver modelSourceResolver;
+    private final EmbeddingModelSourceLoader modelSourceResolver;
     private final EmbeddingNormalizer embeddingNormalizer;
     private ZooModel<String, float[]> model;
     private Predictor<String, float[]> predictor;
     private int dimensions;
 
     public DjlEmbeddingService(
-            AiSearchProperties properties,
-            ResourceLoader resourceLoader,
-            EmbeddingModelSourceResolver modelSourceResolver,
+            EmbeddingModelSourceLoader modelSourceResolver,
             EmbeddingNormalizer embeddingNormalizer
     ) {
-        this.properties = properties;
-        this.resourceLoader = resourceLoader;
         this.modelSourceResolver = modelSourceResolver;
         this.embeddingNormalizer = embeddingNormalizer;
     }
@@ -56,7 +47,7 @@ public class DjlEmbeddingService implements EmbeddingService {
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
                 .optProgress(new ProgressBar());
 
-        EmbeddingModelSource modelSource = modelSourceResolver.resolve(properties, resourceLoader);
+        EmbeddingModelSource modelSource = modelSourceResolver.load();
         if (modelSource.isPathBased()) {
             criteria.optModelPath(modelSource.modelPath());
             if (modelSource.requiresTranslatorFactory()) {
