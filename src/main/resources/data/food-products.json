@@ -1622,5 +1622,13 @@
     "description": "감자, 통모찌, 모짜렐라, 치즈, 에어프라이어, 전자레인, 간편조리",
     "price": 28300,
     "categoryId": 1
+  },
+  {
+    "id": "203",
+    "productName": "설맞이 생만두 (500g)",
+    "category": "간편식",
+    "description": "설에 끓여 먹는 생만두입니다. 국물 요리에 잘 어울리는 담백한 만두입니다.",
+    "price": 9800,
+    "categoryId": 2
   }
 ]
