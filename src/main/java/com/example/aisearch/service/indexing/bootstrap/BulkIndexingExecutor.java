@@ -35,19 +35,22 @@ public class BulkIndexingExecutor {
         try {
             var response = client.bulk(bulkBuilder.refresh(Refresh.WaitFor).build());
             if (response.errors()) {
-                String detail = response.items().stream()
-                        .filter(item -> item.error() != null)
-                        .limit(3)
-                        .map(item -> "id=" + item.id()
-                                + ", type=" + item.error().type()
-                                + ", reason=" + item.error().reason())
-                        .reduce((a, b) -> a + " | " + b)
-                        .orElse("원인 미확인");
-                throw new IllegalStateException("Bulk 인덱싱 중 일부 실패: " + detail);
+                throw new IllegalStateException("Bulk 인덱싱 중 일부 실패: " + summarizeBulkErrors(response));
             }
             return documents.size();
         } catch (IOException e) {
             throw new IllegalStateException("Bulk 인덱싱 실패", e);
         }
+    }
+
+    private String summarizeBulkErrors(co.elastic.clients.elasticsearch.core.BulkResponse response) {
+        return response.items().stream()
+                .filter(item -> item.error() != null)
+                .limit(3)
+                .map(item -> "id=" + item.id()
+                        + ", type=" + item.error().type()
+                        + ", reason=" + item.error().reason())
+                .reduce((a, b) -> a + " | " + b)
+                .orElse("원인 미확인");
     }
 }
