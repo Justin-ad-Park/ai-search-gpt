@@ -1,4 +1,4 @@
-package com.example.aisearch.service.indexing.bootstrap;
+package com.example.aisearch.service.indexing.bootstrap.ingest;
 
 import com.example.aisearch.model.FoodProduct;
 import org.springframework.stereotype.Component;

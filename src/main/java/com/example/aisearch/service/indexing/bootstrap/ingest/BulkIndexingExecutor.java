@@ -1,4 +1,4 @@
-package com.example.aisearch.service.indexing.bootstrap;
+package com.example.aisearch.service.indexing.bootstrap.ingest;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Refresh;

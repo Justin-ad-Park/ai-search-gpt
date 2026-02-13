@@ -1,6 +1,6 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.indexing.bootstrap.IndexRolloutService;
+import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.synonym.SynonymReloadMode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

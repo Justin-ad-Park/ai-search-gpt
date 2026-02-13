@@ -1,4 +1,4 @@
-package com.example.aisearch.service.indexing.bootstrap;
+package com.example.aisearch.service.indexing.bootstrap.schema;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;

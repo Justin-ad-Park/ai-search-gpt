@@ -1,4 +1,4 @@
-package com.example.aisearch.service.indexing.bootstrap;
+package com.example.aisearch.service.indexing.bootstrap.ingest;
 
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.FoodProduct;

@@ -1,6 +1,6 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.indexing.bootstrap.IndexRolloutService;
+import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
