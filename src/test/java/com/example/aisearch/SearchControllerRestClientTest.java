@@ -1,7 +1,6 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
-import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
+import com.example.aisearch.service.indexing.bootstrap.IndexRolloutService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -24,15 +23,11 @@ class SearchControllerRestClientTest extends TruststoreTestBase {
     private int port;
 
     @Autowired
-    private IndexManagementService indexManagementService;
-
-    @Autowired
-    private ProductIndexingService productIndexingService;
+    private IndexRolloutService indexRolloutService;
 
     @BeforeAll
     void setUp() {
-        indexManagementService.recreateIndex();
-        productIndexingService.reindexData();
+        indexRolloutService.rollOutFromSourceData();
     }
 
     @Test

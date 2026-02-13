@@ -26,7 +26,7 @@ public class SynonymReloadService {
 
     public SynonymReloadResult reload(SynonymReloadRequest request) {
         SynonymReloadMode mode = request.mode() == null ? SynonymReloadMode.PRODUCTION : request.mode();
-        String indexName = resolveRequired(request.index(), properties.indexName(), "index");
+        String indexName = resolveRequired(request.index(), resolveDefaultReloadIndex(), "index");
         String synonymsSet = resolveRequired(request.synonymsSet(), properties.synonymsSet(), "synonymsSet");
         List<String> rules = synonymRuleSource.loadRules(mode);
         if (rules.isEmpty()) {
@@ -62,5 +62,13 @@ public class SynonymReloadService {
             throw new IllegalArgumentException(fieldName + " 값이 비어 있습니다.");
         }
         return resolved;
+    }
+
+    private String resolveDefaultReloadIndex() {
+        String readAlias = properties.readAlias();
+        if (readAlias == null || readAlias.isBlank()) {
+            return properties.indexName();
+        }
+        return readAlias;
     }
 }

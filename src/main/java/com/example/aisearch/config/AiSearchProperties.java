@@ -11,9 +11,13 @@ public record AiSearchProperties(
     String username,
     String password,
     /**
-     * 색인명
+     * 색인 베이스명 (버전 인덱스 prefix)
      */
     String indexName,
+    /**
+     * 검색 전용 read alias
+     */
+    String readAlias,
     /**
      * 동의어 세트 ID
      */

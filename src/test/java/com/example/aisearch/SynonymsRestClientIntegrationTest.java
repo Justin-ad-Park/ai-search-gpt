@@ -1,7 +1,6 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
-import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
+import com.example.aisearch.service.indexing.bootstrap.IndexRolloutService;
 import com.example.aisearch.service.synonym.SynonymReloadMode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,18 +28,14 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
     private int port;
 
     @Autowired
-    private IndexManagementService indexManagementService;
-
-    @Autowired
-    private ProductIndexingService productIndexingService;
+    private IndexRolloutService indexRolloutService;
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeAll
     void setUp() {
-        indexManagementService.recreateIndex();
-        productIndexingService.reindexData();
+        indexRolloutService.rollOutFromSourceData();
     }
 
     @AfterAll

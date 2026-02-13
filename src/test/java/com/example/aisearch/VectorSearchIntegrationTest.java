@@ -5,8 +5,8 @@ import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
-import com.example.aisearch.service.indexing.bootstrap.IndexManagementService;
-import com.example.aisearch.service.indexing.bootstrap.ProductIndexingService;
+import com.example.aisearch.service.indexing.bootstrap.IndexRolloutResult;
+import com.example.aisearch.service.indexing.bootstrap.IndexRolloutService;
 import com.example.aisearch.service.search.VectorSearchService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
@@ -24,12 +24,8 @@ import java.util.stream.Collectors;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class VectorSearchIntegrationTest extends TruststoreTestBase {
 
-
     @Autowired
-    private IndexManagementService indexManagementService;
-
-    @Autowired
-    private ProductIndexingService productIndexingService;
+    private IndexRolloutService indexRolloutService;
 
     @Autowired
     private VectorSearchService vectorSearchService;
@@ -37,11 +33,12 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     @Test
     @Order(1)
     void reindexSampleData() {
-        // 인덱스 재생성 후 샘플 데이터 인덱싱
-        indexManagementService.recreateIndex();
-        long indexed = productIndexingService.reindexData();
+        IndexRolloutResult rollout = indexRolloutService.rollOutFromSourceData();
+        long indexed = rollout.indexedCount();
         Assertions.assertTrue(indexed >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
-        System.out.println("[INDEXED] total=" + indexed);
+        System.out.println("[INDEXED] oldIndex=" + rollout.oldIndex()
+                + ", newIndex=" + rollout.newIndex()
+                + ", total=" + indexed);
     }
 
     @Test

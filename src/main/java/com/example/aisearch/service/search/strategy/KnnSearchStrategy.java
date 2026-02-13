@@ -58,7 +58,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         Query baseQuery = buildHybridBaseQuery(request, filterQuery);
 
         SearchResponse<Map> response = client.search(s -> s
-                        .index(properties.indexName())
+                        .index(resolveReadAlias())
                         .query(q -> q.scriptScore(ss -> ss
                                 .query(baseQuery)
                                 .script(sc -> sc.inline(i -> i
@@ -87,7 +87,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         int from = request.from();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
-                        .index(properties.indexName())
+                        .index(resolveReadAlias())
                         .query(rootQuery)
                         .sort(request.sortOption().toSortOptions())
                         .trackScores(true)
@@ -150,5 +150,13 @@ public class KnnSearchStrategy implements SearchStrategy {
             list.add(value);
         }
         return list;
+    }
+
+    private String resolveReadAlias() {
+        String readAlias = properties.readAlias();
+        if (readAlias == null || readAlias.isBlank()) {
+            return properties.indexName();
+        }
+        return readAlias;
     }
 }

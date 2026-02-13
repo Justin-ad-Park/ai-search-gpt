@@ -32,6 +32,10 @@ public class ProductIndexingService {
     }
 
     public long reindexData() {
+        return reindexData(properties.indexName());
+    }
+
+    public long reindexData(String indexName) {
         // 샘플 데이터 로딩
         List<FoodProduct> foods = foodDataLoader.loadAll();
         if (foods.isEmpty()) {
@@ -46,6 +50,6 @@ public class ProductIndexingService {
                 .collect(Collectors.toList());
 
         // refresh=wait_for로 바로 검색 가능 상태로 만듦 (색인 직후 검색 테스트 용도)
-        return bulkIndexingExecutor.bulkIndex(properties.indexName(), documents);
+        return bulkIndexingExecutor.bulkIndex(indexName, documents);
     }
 }
