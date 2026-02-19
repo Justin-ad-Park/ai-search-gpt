@@ -2,8 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TEMPLATE_PATH="${SCRIPT_DIR}/es-cluster-custom-image.yaml"
-ES_CUSTOM_IMAGE="${ES_CUSTOM_IMAGE:-ai-search-es:8.13.4-nori}"
+MANIFEST_PATH="${SCRIPT_DIR}/es-cluster-custom-image.yaml"
 
 if ! command -v kubectl >/dev/null 2>&1; then
   echo "[ERROR] kubectl not found"
@@ -15,21 +14,11 @@ if [ -n "${CURRENT_CONTEXT}" ]; then
   echo "[INFO] kubectl context: ${CURRENT_CONTEXT}"
 fi
 
-echo "[INFO] using image: ${ES_CUSTOM_IMAGE}"
-
-TMP_MANIFEST_BASE="$(mktemp /tmp/es-cluster-custom-image.XXXXXX)"
-TMP_MANIFEST="${TMP_MANIFEST_BASE}.yaml"
-mv "${TMP_MANIFEST_BASE}" "${TMP_MANIFEST}"
-sed "s|__ES_IMAGE__|${ES_CUSTOM_IMAGE}|g" "${TEMPLATE_PATH}" > "${TMP_MANIFEST}"
-
-cleanup() {
-  rm -f "${TMP_MANIFEST}"
-}
-trap cleanup EXIT
+echo "[INFO] using manifest: ${MANIFEST_PATH}"
 
 set -x
 kubectl -n ai-search delete elasticsearch ai-search-es --ignore-not-found=true >/dev/null 2>&1 || true
-kubectl apply --request-timeout=60s -f "${TMP_MANIFEST}"
+kubectl apply --request-timeout=60s -f "${MANIFEST_PATH}"
 
 echo "[INFO] waiting for Elasticsearch to be Ready (timeout 600s)"
 start_ts=$(date +%s)
