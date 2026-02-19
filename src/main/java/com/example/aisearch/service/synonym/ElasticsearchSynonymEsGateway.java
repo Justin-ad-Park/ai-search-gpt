@@ -60,7 +60,7 @@ public class ElasticsearchSynonymEsGateway implements SynonymEsGateway {
             return false;
         }
 
-        boolean topLevelMatches = topMessage.contains("status: 200")
+        boolean topLevelMatches = (topMessage.contains("status: 200") || topMessage.contains("status: 201"))
                 && topMessage.contains("es/synonyms.put_synonym")
                 && topMessage.contains("Failed to decode response");
         if (!topLevelMatches) {

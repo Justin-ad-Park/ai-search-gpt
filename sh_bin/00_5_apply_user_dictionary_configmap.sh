@@ -16,6 +16,11 @@ if [ ! -f "${DICT_FILE_PATH}" ]; then
   exit 1
 fi
 
+if ! kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1; then
+  echo "[INFO] namespace ${NAMESPACE} not found. creating..."
+  kubectl create namespace "${NAMESPACE}"
+fi
+
 CURRENT_CONTEXT="$(kubectl config current-context 2>/dev/null || true)"
 if [ -n "${CURRENT_CONTEXT}" ]; then
   echo "[INFO] kubectl context: ${CURRENT_CONTEXT}"
