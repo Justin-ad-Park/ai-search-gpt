@@ -25,10 +25,22 @@ public class VectorSearchService {
         return searchStrategy.search(searchRequest, pageable);
     }
 
+    /**
+     * 테스트 용도로 검색 결과만 단순히 리턴하는 메서드
+     * @param searchRequest
+     * @param pageable
+     * @return
+     */
     public List<SearchHitResult> search(SearchRequest searchRequest, Pageable pageable) {
         return searchPage(searchRequest, pageable).results();
     }
 
+    /**
+     * 테스트 용도로 첫페이지 검색 결과만 단순히 리턴하는 메서드
+     * @param searchRequest
+     * @param pageable
+     * @return
+     */
     public List<SearchHitResult> search(String query, int size) {
         SearchRequest request = new SearchRequest(query, null, null, null);
         return searchPage(request, SearchPagingPolicy.toPageable(SearchPagingPolicy.DEFAULT_PAGE, size)).results();
