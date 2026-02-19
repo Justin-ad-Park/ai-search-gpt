@@ -14,6 +14,8 @@ import com.example.aisearch.service.embedding.model.EmbeddingNormalizer;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,6 +37,8 @@ import java.io.IOException;
  */
 @Service
 public class DjlEmbeddingService implements EmbeddingService {
+
+    private static final Logger log = LoggerFactory.getLogger(DjlEmbeddingService.class);
 
     private final EmbeddingModelSourceLoader modelSourceResolver;
     private final EmbeddingNormalizer embeddingNormalizer;
@@ -96,7 +100,7 @@ public class DjlEmbeddingService implements EmbeddingService {
         float[] probe = predictRaw("한글 식품 벡터 검색 테스트");
         dimensions = probe.length;
 
-        System.out.println("\n\n##dimensions##: " + dimensions);
+        log.info("Embedding model initialized. dimensions={}", dimensions);
     }
 
     @Override
