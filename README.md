@@ -13,7 +13,7 @@
 1. `./sh_bin/00_2_install_eck_operator.sh` (1회성)
 2. `./sh_bin/00_3_build_elasticsearch_nori_image.sh` (1회성)
 3. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_4_push_elasticsearch_nori_image.sh` (선택)
-4. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_5_start_elasticsearch_cluster_custom_image.sh`
+4. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_6_start_elasticsearch_cluster_custom_image.sh`
 5. `./sh_bin/10_1_prepare_djl_truststore.sh` (1회성)
 6. `./sh_bin/01_check_elasticsearch_status.sh`
 7. `./sh_bin/02_generate_sample_data.sh`

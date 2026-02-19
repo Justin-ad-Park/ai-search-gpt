@@ -53,7 +53,7 @@ fi
 # TARGET_IMAGE 파라미터가 설정되면 이미지를 원격 레지스트리에 push 하기 시도함
 if [ -z "${TARGET_IMAGE}" ]; then
   echo "[INFO] ES_CUSTOM_IMAGE가 설정되지 않았습니다. 로컬 Docker Desktop 워크플로우로 push 단계를 건너뜁니다."
-  echo "[NEXT] 로컬 이미지를 그대로 사용해 다음 단계를 실행하세요: ./sh_bin/00_5_start_elasticsearch_cluster_custom_image.sh"
+  echo "[NEXT] 로컬 이미지를 그대로 사용해 다음 단계를 실행하세요: ./sh_bin/00_6_start_elasticsearch_cluster_custom_image.sh"
   exit 0
 fi
 

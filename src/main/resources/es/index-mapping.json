@@ -3,6 +3,13 @@
     "number_of_shards": 1,
     "number_of_replicas": 0,
     "analysis": {
+      "tokenizer": {
+        "ko_nori_userdict_tokenizer": {
+          "type": "nori_tokenizer",
+          "decompound_mode": "mixed",
+          "user_dictionary": "analysis/user_dict_ko.txt"
+        }
+      },
       "filter": {
         "ko_pos_filter": {
           "type": "nori_part_of_speech",
@@ -33,12 +40,12 @@
       "analyzer": {
         "ko_mall_analyzer": {
           "type": "custom",
-          "tokenizer": "nori_tokenizer",
+          "tokenizer": "ko_nori_userdict_tokenizer",
           "filter": ["lowercase", "ko_pos_filter"]
         },
         "ko_mall_search_analyzer": {
           "type": "custom",
-          "tokenizer": "nori_tokenizer",
+          "tokenizer": "ko_nori_userdict_tokenizer",
           "filter": ["lowercase", "ko_synonym_filter", "ko_pos_filter"]
         }
       }

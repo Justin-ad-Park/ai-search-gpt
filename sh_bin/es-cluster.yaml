@@ -22,8 +22,16 @@ spec:
         xpack.license.self_generated.type: basic
       podTemplate:
         spec:
+          volumes:
+            - name: user-dict
+              configMap:
+                name: es-user-dict
           containers:
             - name: elasticsearch
+              volumeMounts:
+                - name: user-dict
+                  mountPath: /usr/share/elasticsearch/config/analysis/user_dict_ko.txt
+                  subPath: user_dict_ko.txt
               resources:
                 requests:
                   memory: 2Gi
