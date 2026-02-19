@@ -8,6 +8,7 @@
 ./sh_bin/00_3_build_elasticsearch_nori_image.sh
 ./sh_bin/00_4_push_elasticsearch_nori_image.sh
 ./sh_bin/00_5_start_elasticsearch_cluster_custom_image.sh
+./sh_bin/00_6_apply_user_dictionary_configmap.sh
 ./sh_bin/00_9_check_elasticsearch_nori_plugin.sh
 ```
 
