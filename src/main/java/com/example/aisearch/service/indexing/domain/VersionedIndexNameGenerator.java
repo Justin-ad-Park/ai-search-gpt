@@ -7,6 +7,16 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * 기준 인덱스명에 버전 suffix를 붙여 신규 인덱스명을 생성한다.
+ *
+ * 형식: {baseIndexName}-vyyyyMMddHHmmss
+ * 예: food-products-v20260219143015
+ *
+ * 목적:
+ * - 인덱스 롤아웃 시 충돌 없는 새 인덱스명 보장
+ * - 시간 기반으로 생성 시점을 추적 가능
+ */
 @Component
 public class VersionedIndexNameGenerator {
 

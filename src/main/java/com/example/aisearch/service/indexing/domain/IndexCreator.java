@@ -11,6 +11,15 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.StringReader;
 
+/**
+ * 신규 인덱스를 생성하는 도메인 서비스.
+ *
+ * 책임:
+ * - 버전드 인덱스명 생성
+ * - 동의어 세트 준비(프로덕션 기준)
+ * - 임베딩 차원/동의어 설정을 반영한 매핑 생성
+ * - Elasticsearch 인덱스 생성 호출
+ */
 @Service
 public class IndexCreator {
 
@@ -37,12 +46,25 @@ public class IndexCreator {
         this.versionedIndexNameGenerator = versionedIndexNameGenerator;
     }
 
+    /**
+     * 기본 인덱스명(properties.indexName)을 기준으로 버전드 인덱스를 생성한다.
+     *
+     * @return 생성된 신규 인덱스명
+     */
     public String createVersionedIndex() {
         String newIndex = versionedIndexNameGenerator.generate(properties.indexName());
         createIndex(newIndex);
         return newIndex;
     }
 
+    /**
+     * 지정한 이름으로 인덱스를 생성한다.
+     *
+     * 동의어 세트 준비 후, 임베딩 차원을 반영한 매핑으로 인덱스를 생성한다.
+     *
+     * @param indexName 생성할 물리 인덱스명
+     * @throws IndexCreationException 인덱스 생성 실패 시
+     */
     public void createIndex(String indexName) {
         try {
             synonymReloadService.ensureProductionSynonymsSet();
