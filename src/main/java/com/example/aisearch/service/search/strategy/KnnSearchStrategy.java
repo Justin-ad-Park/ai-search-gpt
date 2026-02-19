@@ -10,6 +10,7 @@ import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -38,20 +39,20 @@ public class KnnSearchStrategy implements SearchStrategy {
     }
 
     @Override
-    public SearchPageResult search(SearchRequest searchRequest) {
+    public SearchPageResult search(SearchRequest searchRequest, Pageable pageable) {
         try {
             if (searchRequest.hasQuery()) {
-                return vectorScoreSearch(searchRequest);
+                return vectorScoreSearch(searchRequest, pageable);
             }
-            return filterOnlySearch(searchRequest);
+            return filterOnlySearch(searchRequest, pageable);
         } catch (IOException e) {
             throw new IllegalStateException("벡터 검색 실패", e);
         }
     }
 
-    private SearchPageResult vectorScoreSearch(SearchRequest request) throws IOException {
-        int size = request.size();
-        int from = request.from();
+    private SearchPageResult vectorScoreSearch(SearchRequest request, Pageable pageable) throws IOException {
+        int size = pageable.getPageSize();
+        int from = (int) pageable.getOffset();
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
         Query filterQuery = filterQueryBuilder.buildFilterQuery(request);
@@ -79,12 +80,12 @@ public class KnnSearchStrategy implements SearchStrategy {
                 Map.class
         );
         List<SearchHitResult> results = toResults(response, true);
-        return SearchPageResult.of(request, extractTotalHits(response), results);
+        return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
-    private SearchPageResult filterOnlySearch(SearchRequest request) throws IOException {
-        int size = request.size();
-        int from = request.from();
+    private SearchPageResult filterOnlySearch(SearchRequest request, Pageable pageable) throws IOException {
+        int size = pageable.getPageSize();
+        int from = (int) pageable.getOffset();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
                         .index(resolveReadAlias())
@@ -96,7 +97,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                 Map.class
         );
         List<SearchHitResult> results = toResults(response, false);
-        return SearchPageResult.of(request, extractTotalHits(response), results);
+        return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
     private Query buildHybridBaseQuery(SearchRequest request, Query filterQuery) {

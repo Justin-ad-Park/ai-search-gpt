@@ -2,8 +2,10 @@ package com.example.aisearch.service.search;
 
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPageResult;
+import com.example.aisearch.model.search.SearchPagingPolicy;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.search.strategy.SearchStrategy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,15 +21,16 @@ public class VectorSearchService {
         this.searchStrategy = searchStrategy;
     }
 
-    public SearchPageResult searchPage(SearchRequest searchRequest) {
-        return searchStrategy.search(searchRequest);
+    public SearchPageResult searchPage(SearchRequest searchRequest, Pageable pageable) {
+        return searchStrategy.search(searchRequest, pageable);
     }
 
-    public List<SearchHitResult> search(SearchRequest searchRequest) {
-        return searchPage(searchRequest).results();
+    public List<SearchHitResult> search(SearchRequest searchRequest, Pageable pageable) {
+        return searchPage(searchRequest, pageable).results();
     }
 
     public List<SearchHitResult> search(String query, int size) {
-        return searchPage(new SearchRequest(query, SearchRequest.DEFAULT_PAGE, size, null, null, null)).results();
+        SearchRequest request = new SearchRequest(query, null, null, null);
+        return searchPage(request, SearchPagingPolicy.toPageable(SearchPagingPolicy.DEFAULT_PAGE, size)).results();
     }
 }

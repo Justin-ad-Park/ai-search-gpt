@@ -9,27 +9,23 @@ import static org.junit.jupiter.api.Assertions.*;
 class SearchRequestTest {
 
     @Test
-    void shouldUseDefaultSizeAndTrimQuery() {
+    void shouldTrimQueryAndDefaultSortOption() {
         SearchRequest request = new SearchRequest("  간식  ", null, null, null);
 
         assertEquals("간식", request.query());
-        assertEquals(SearchRequest.DEFAULT_PAGE, request.page());
-        assertEquals(SearchRequest.DEFAULT_SIZE, request.size());
         assertEquals(SearchSortOption.RELEVANCE_DESC, request.sortOption());
         assertTrue(request.hasQuery());
     }
 
     @Test
     void shouldUseExplicitSortOption() {
-        SearchRequest request = new SearchRequest("간식", 2, 5, null, null, SearchSortOption.PRICE_ASC);
-        assertEquals(2, request.page());
+        SearchRequest request = new SearchRequest("간식", null, null, SearchSortOption.PRICE_ASC);
         assertEquals(SearchSortOption.PRICE_ASC, request.sortOption());
-        assertEquals(5, request.from());
     }
 
     @Test
     void shouldTreatBlankQueryAsOptional() {
-        SearchRequest request = new SearchRequest("   ", 10, null, List.of(1, 2, 2));
+        SearchRequest request = new SearchRequest("   ", null, List.of(1, 2, 2), null);
 
         assertNull(request.query());
         assertFalse(request.hasQuery());
@@ -47,10 +43,10 @@ class SearchRequestTest {
     }
 
     @Test
-    void shouldRejectInvalidPage() {
+    void shouldRejectInvalidPageSizePolicy() {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> new SearchRequest("간식", 0, 5, null, List.of(1), SearchSortOption.RELEVANCE_DESC)
+                () -> SearchPagingPolicy.toPageable(0, 5)
         );
         assertTrue(ex.getMessage().contains("page"));
     }

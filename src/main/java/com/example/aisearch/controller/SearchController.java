@@ -4,6 +4,7 @@ import com.example.aisearch.controller.dto.ReloadSynonymsRequestDto;
 import com.example.aisearch.controller.dto.ReloadSynonymsResponseDto;
 import com.example.aisearch.controller.dto.SearchResponseDto;
 import com.example.aisearch.model.search.SearchPageResult;
+import com.example.aisearch.model.search.SearchPagingPolicy;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
@@ -11,8 +12,8 @@ import com.example.aisearch.service.search.VectorSearchService;
 import com.example.aisearch.service.synonym.SynonymReloadRequest;
 import com.example.aisearch.service.synonym.SynonymReloadResult;
 import com.example.aisearch.service.synonym.SynonymReloadService;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,29 +43,31 @@ public class SearchController {
     @GetMapping("/api/search")
     public SearchResponseDto search(
             @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "page", defaultValue = "1") @Min(1) Integer page,
-            @RequestParam(value = "size", defaultValue = "5") @Min(1) @Max(20) Integer size,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "5") Integer size,
             @RequestParam(value = "minPrice", required = false) @Min(0) Integer minPrice,
             @RequestParam(value = "maxPrice", required = false) @Min(0) Integer maxPrice,
             @RequestParam(value = "categoryId", required = false) List<Integer> categoryIds,
             @RequestParam(value = "sort", defaultValue = "RELEVANCE_DESC") SearchSortOption sortOption
     ) {
         SearchRequest request;
+        Pageable pageable;
         try {
             SearchPrice searchPrice = (minPrice == null && maxPrice == null)
                     ? null
                     : new SearchPrice(minPrice, maxPrice);
-            request = new SearchRequest(query, page, size, searchPrice, categoryIds, sortOption);
+            request = new SearchRequest(query, searchPrice, categoryIds, sortOption);
+            pageable = SearchPagingPolicy.toPageable(page, size);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
 
-        SearchPageResult pageResult = vectorSearchService.searchPage(request);
+        SearchPageResult pageResult = vectorSearchService.searchPage(request, pageable);
         List<Integer> normalizedCategoryIds = categoryIds == null ? List.of() : categoryIds;
         return new SearchResponseDto(
                 query,
-                page,
-                size,
+                pageResult.page(),
+                pageResult.size(),
                 minPrice,
                 maxPrice,
                 normalizedCategoryIds,

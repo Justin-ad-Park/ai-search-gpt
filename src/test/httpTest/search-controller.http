@@ -42,7 +42,6 @@ Content-Type: application/json
 
 {
   "mode": "REGRESSION",
-  "index": "food-products-v1-test",
   "synonymsSet": "food-synonyms"
 }
 
@@ -52,7 +51,6 @@ Content-Type: application/json
 
 {
   "mode": "PRODUCTION",
-  "index": "food-products-v1-test",
   "synonymsSet": "food-synonyms"
 }
 
