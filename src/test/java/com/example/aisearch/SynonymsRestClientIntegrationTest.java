@@ -49,14 +49,14 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
 
     @Test
     @Order(1)
-    void 회귀동의어_적용후_떡국_검색시_생만두가_포함된다() throws Exception {
+    void 회귀동의어_적용후_딤섬_검색시_만두가_포함된다() throws Exception {
         reloadSynonymsAndAssert(SynonymReloadMode.REGRESSION);
         assertSynonymSearchContainsProduct("딤섬", "만두");
     }
 
     @Test
     @Order(2)
-    void 동의어_적용후_교자_검색시_생만두가_포함된다() throws Exception {
+    void 동의어_적용후_교자_검색시_만두가_포함된다() throws Exception {
         reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
         assertSynonymSearchContainsProduct("교자", "만두");
     }
@@ -68,7 +68,6 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
         reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
         assertSynonymSearchContainsProduct("얄피", "만두");
     }
-
 
     private HttpResponse<String> reloadSynonyms(SynonymReloadMode mode) throws Exception {
         URI uri = URI.create("http://localhost:" + port + "/api/search/reload-synonyms");

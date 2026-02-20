@@ -5,11 +5,10 @@ import com.example.aisearch.service.synonym.SynonymReloadRequest;
 
 public record ReloadSynonymsRequestDto(
         String mode,
-        String index,
         String synonymsSet
 ) {
     public SynonymReloadRequest toServiceRequest() {
         SynonymReloadMode parsedMode = SynonymReloadMode.fromNullable(mode);
-        return new SynonymReloadRequest(parsedMode, index, synonymsSet);
+        return new SynonymReloadRequest(parsedMode, synonymsSet);
     }
 }
