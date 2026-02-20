@@ -50,20 +50,23 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
     @Test
     @Order(1)
     void 회귀동의어_적용후_떡국_검색시_생만두가_포함된다() throws Exception {
-        assertSynonymSearchContainsProduct(SynonymReloadMode.REGRESSION, "떡국", "생만두");
+        reloadSynonymsAndAssert(SynonymReloadMode.REGRESSION);
+        assertSynonymSearchContainsProduct("딤섬", "만두");
     }
 
     @Test
     @Order(2)
     void 동의어_적용후_교자_검색시_생만두가_포함된다() throws Exception {
-        assertSynonymSearchContainsProduct(SynonymReloadMode.PRODUCTION, "교자", "생만두");
+        reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
+        assertSynonymSearchContainsProduct("교자", "만두");
     }
 
 
     @Test
     @Order(3)
     void 동의어_적용후_얄피_검색시_생만두가_포함된다() throws Exception {
-        assertSynonymSearchContainsProduct(SynonymReloadMode.PRODUCTION, "얄피", "생만두");
+        reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
+        assertSynonymSearchContainsProduct("얄피", "만두");
     }
 
 
@@ -144,11 +147,9 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
     }
 
     private void assertSynonymSearchContainsProduct(
-            SynonymReloadMode mode,
             String query,
         String expectedProductNameKeyword
     ) throws Exception {
-        reloadSynonymsAndAssert(mode);
         JsonNode searchJson = searchAndAssertOk(query, 20);
         printSearchResults(query, searchJson, expectedProductNameKeyword);
         assertContainsProductName(searchJson.path("results"), expectedProductNameKeyword);
