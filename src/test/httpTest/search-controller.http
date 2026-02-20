@@ -62,4 +62,4 @@ GET http://localhost:8080/api/search?q=교자
 GET http://localhost:8080/api/search?q=얄피
 
 ### 동의어 회귀 테스트
-GET http://localhost:8080/api/search?q=떡국
+GET http://localhost:8080/api/search?q=딤섬

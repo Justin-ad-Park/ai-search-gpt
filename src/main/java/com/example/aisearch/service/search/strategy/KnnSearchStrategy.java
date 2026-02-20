@@ -55,11 +55,10 @@ public class KnnSearchStrategy implements SearchStrategy {
         int from = (int) pageable.getOffset();
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
-        Query filterQuery = filterQueryBuilder.buildFilterQuery(request);
-        Query baseQuery = buildHybridBaseQuery(request, filterQuery);
+        Query baseQuery = buildHybridBaseQuery(request, filterQueryBuilder.buildFilterQuery(request));
 
         SearchResponse<Map> response = client.search(s -> s
-                        .index(resolveReadAlias())
+                        .index(requireReadAlias())
                         .query(q -> q.scriptScore(ss -> ss
                                 .query(baseQuery)
                                 .script(sc -> sc.inline(i -> i
@@ -88,7 +87,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         int from = (int) pageable.getOffset();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
-                        .index(resolveReadAlias())
+                        .index(requireReadAlias())
                         .query(rootQuery)
                         .sort(request.sortOption().toSortOptions())
                         .trackScores(true)
@@ -100,16 +99,14 @@ public class KnnSearchStrategy implements SearchStrategy {
         return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
-    private Query buildHybridBaseQuery(SearchRequest request, Query filterQuery) {
+    private Query buildHybridBaseQuery(SearchRequest request, java.util.Optional<Query> filterQuery) {
         Query lexicalQuery = Query.of(q -> q.multiMatch(mm -> mm
                 .query(request.query())
                 .fields("product_name^2", "description")
         ));
 
         return Query.of(q -> q.bool(b -> {
-            if (filterQuery != null) {
-                b.filter(filterQuery);
-            }
+            filterQuery.ifPresent(b::filter);
             b.should(lexicalQuery);
             b.minimumShouldMatch("0");
             return b;
@@ -151,10 +148,6 @@ public class KnnSearchStrategy implements SearchStrategy {
             list.add(value);
         }
         return list;
-    }
-
-    private String resolveReadAlias() {
-        return requireReadAlias();
     }
 
     private String requireReadAlias() {

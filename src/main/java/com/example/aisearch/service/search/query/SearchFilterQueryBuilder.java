@@ -9,27 +9,25 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class SearchFilterQueryBuilder {
 
-    public Query buildFilterQuery(SearchRequest request) {
+    public Optional<Query> buildFilterQuery(SearchRequest request) {
         List<Query> filters = new ArrayList<>();
         addPriceFilter(request, filters);
         addCategoryFilter(request, filters);
 
         if (filters.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
-        return Query.of(q -> q.bool(b -> b.filter(filters)));
+        return Optional.of(Query.of(q -> q.bool(b -> b.filter(filters))));
     }
 
     public Query buildRootQuery(SearchRequest request) {
-        Query filterQuery = buildFilterQuery(request);
-        if (filterQuery == null) {
-            return Query.of(q -> q.matchAll(m -> m));
-        }
-        return filterQuery;
+        return buildFilterQuery(request)
+                .orElseGet(() -> Query.of(q -> q.matchAll(m -> m)));
     }
 
     private void addPriceFilter(SearchRequest request, List<Query> filters) {

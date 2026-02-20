@@ -2,9 +2,7 @@ package com.example.aisearch.support.connection;
 
 import com.example.aisearch.config.AiSearchK8sProperties;
 import com.example.aisearch.config.AiSearchProperties;
-import com.example.aisearch.support.connection.parts.ElasticsearchUrlBuilder;
-import com.example.aisearch.support.connection.parts.PortForwardDecision;
-import com.example.aisearch.support.k8s.ElasticPasswordProvider;
+import com.example.aisearch.support.k8s.ElasticsearchK8sHelper;
 import com.example.aisearch.support.k8s.K8sPortForwarder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,24 +26,10 @@ public class ElasticsearchAutoConnector {
 
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchAutoConnector.class);
 
-    private final PortForwardDecision portForwardDecision;
     private final K8sPortForwarder k8sPortForwarder;
-    private final ElasticPasswordProvider passwordProvider;
-    private final ElasticsearchUrlBuilder urlBuilder;
 
-    /**
-     * 포트포워딩 판단/실행/비밀번호 로딩/URL 조합 역할을 가진 컴포넌트를 주입한다.
-     */
-    public ElasticsearchAutoConnector(
-            PortForwardDecision portForwardDecision,
-            K8sPortForwarder k8sPortForwarder,
-            ElasticPasswordProvider passwordProvider,
-            ElasticsearchUrlBuilder urlBuilder
-    ) {
-        this.portForwardDecision = portForwardDecision;
+    public ElasticsearchAutoConnector(K8sPortForwarder k8sPortForwarder) {
         this.k8sPortForwarder = k8sPortForwarder;
-        this.passwordProvider = passwordProvider;
-        this.urlBuilder = urlBuilder;
     }
 
     /**
@@ -65,7 +49,7 @@ public class ElasticsearchAutoConnector {
         String username = properties.username();
         String password = properties.password();
 
-        if (!portForwardDecision.shouldAutoForward(k8sProperties, uri)) {
+        if (!shouldAutoForward(k8sProperties, uri)) {
             return new ConnectionInfo(uri.toString(), username, password);
         }
 
@@ -75,7 +59,7 @@ public class ElasticsearchAutoConnector {
             String namespace = k8sProperties.namespace();
             String serviceName = k8sPortForwarder.resolveServiceName(namespace, k8sProperties.serviceName());
 
-            password = passwordProvider.resolvePassword(namespace, k8sProperties.secretName(), password);
+            password = resolvePassword(namespace, k8sProperties.secretName(), password);
 
             k8sPortForwarder.ensurePortForward(
                     namespace,
@@ -83,12 +67,42 @@ public class ElasticsearchAutoConnector {
                     k8sProperties.localPort(),
                     k8sProperties.remotePort()
             );
-            String resolvedUrl = urlBuilder.buildLocalUrl(uri, k8sProperties.localPort());
+            String resolvedUrl = buildLocalUrl(uri, k8sProperties.localPort());
             return new ConnectionInfo(resolvedUrl, username, password);
         } catch (Exception e) {
             log.warn("[ES_AUTO] port-forward failed, falling back to {}", uri, e);
             return new ConnectionInfo(uri.toString(), username, password);
         }
+    }
+
+    private boolean shouldAutoForward(AiSearchK8sProperties k8sProperties, URI uri) {
+        return k8sProperties.autoPortForward() && isLocalHost(uri.getHost());
+    }
+
+    private boolean isLocalHost(String host) {
+        if (host == null) {
+            return false;
+        }
+        return "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host);
+    }
+
+    private String resolvePassword(String namespace, String secretName, String currentPassword)
+            throws Exception {
+        if (!needsPassword(currentPassword)) {
+            return currentPassword;
+        }
+        String password = ElasticsearchK8sHelper.readElasticPassword(namespace, secretName);
+        log.info("[ES_AUTO] elastic password loaded from secret {}", secretName);
+        return password;
+    }
+
+    private boolean needsPassword(String password) {
+        return password == null || password.isBlank() || "password".equals(password);
+    }
+
+    private String buildLocalUrl(URI baseUri, int localPort) {
+        String scheme = baseUri.getScheme() == null ? "http" : baseUri.getScheme();
+        return scheme + "://localhost:" + localPort;
     }
 
     /**

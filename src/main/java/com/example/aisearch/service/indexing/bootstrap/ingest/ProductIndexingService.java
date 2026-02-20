@@ -1,6 +1,5 @@
 package com.example.aisearch.service.indexing.bootstrap.ingest;
 
-import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.FoodProduct;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import org.springframework.stereotype.Service;
@@ -11,20 +10,17 @@ import java.util.stream.Collectors;
 @Service
 public class ProductIndexingService {
 
-    private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final FoodDataLoader foodDataLoader;
     private final FoodProductDocumentMapper documentMapper;
     private final BulkIndexingExecutor bulkIndexingExecutor;
 
     public ProductIndexingService(
-            AiSearchProperties properties,
             EmbeddingService embeddingService,
             FoodDataLoader foodDataLoader,
             FoodProductDocumentMapper documentMapper,
             BulkIndexingExecutor bulkIndexingExecutor
     ) {
-        this.properties = properties;
         this.embeddingService = embeddingService;
         this.foodDataLoader = foodDataLoader;
         this.documentMapper = documentMapper;

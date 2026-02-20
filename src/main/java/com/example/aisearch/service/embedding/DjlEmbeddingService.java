@@ -10,7 +10,6 @@ import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import com.example.aisearch.service.embedding.model.EmbeddingModelSource;
 import com.example.aisearch.service.embedding.model.EmbeddingModelSourceLoader;
-import com.example.aisearch.service.embedding.model.EmbeddingNormalizer;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -41,17 +40,12 @@ public class DjlEmbeddingService implements EmbeddingService {
     private static final Logger log = LoggerFactory.getLogger(DjlEmbeddingService.class);
 
     private final EmbeddingModelSourceLoader modelSourceResolver;
-    private final EmbeddingNormalizer embeddingNormalizer;
     private ZooModel<String, float[]> model;
     private Predictor<String, float[]> predictor;
     private int dimensions;
 
-    public DjlEmbeddingService(
-            EmbeddingModelSourceLoader modelSourceResolver,
-            EmbeddingNormalizer embeddingNormalizer
-    ) {
+    public DjlEmbeddingService(EmbeddingModelSourceLoader modelSourceResolver) {
         this.modelSourceResolver = modelSourceResolver;
-        this.embeddingNormalizer = embeddingNormalizer;
     }
 
     @PostConstruct
@@ -109,7 +103,7 @@ public class DjlEmbeddingService implements EmbeddingService {
         // 2) L2 정규화로 벡터 길이를 1로 맞춘다.
         //    코사인 유사도 계산 시 더 안정적이고 일관된 결과를 얻을 수 있다.
         float[] raw = predictRaw(text);
-        return embeddingNormalizer.l2Normalize(raw);
+        return l2Normalize(raw);
     }
 
     @Override
@@ -124,6 +118,23 @@ public class DjlEmbeddingService implements EmbeddingService {
         } catch (TranslateException e) {
             throw new IllegalStateException("임베딩 생성 실패", e);
         }
+    }
+
+    private float[] l2Normalize(float[] vector) {
+        double sum = 0.0;
+        for (float value : vector) {
+            sum += value * value;
+        }
+        double norm = Math.sqrt(sum);
+        if (norm == 0.0) {
+            return vector;
+        }
+
+        float[] normalized = new float[vector.length];
+        for (int i = 0; i < vector.length; i++) {
+            normalized[i] = (float) (vector[i] / norm);
+        }
+        return normalized;
     }
 
     @PreDestroy

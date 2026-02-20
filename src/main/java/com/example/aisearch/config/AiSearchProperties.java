@@ -41,14 +41,6 @@ public record AiSearchProperties(
     /**
      * 검색 결과 필터링 최소 점수
      */
-    double minScoreThreshold,
-    /**
-     * 후보군 확장 배수
-     */
-    int numCandidatesMultiplier,
-    /**
-     * 후보군 최소 개수
-     */
-    int numCandidatesMin
+    double minScoreThreshold
 ) {
 }
