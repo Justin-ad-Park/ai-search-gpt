@@ -31,10 +31,6 @@ public class ProductIndexingService {
         this.bulkIndexingExecutor = bulkIndexingExecutor;
     }
 
-    public long reindexData() {
-        return reindexData(properties.indexName());
-    }
-
     public long reindexData(String indexName) {
         // 샘플 데이터 로딩
         List<FoodProduct> foods = foodDataLoader.loadAll();

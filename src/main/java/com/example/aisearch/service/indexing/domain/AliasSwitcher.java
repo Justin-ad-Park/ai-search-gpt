@@ -87,7 +87,7 @@ public class AliasSwitcher {
     private String resolveReadAlias() {
         String readAlias = properties.readAlias();
         if (readAlias == null || readAlias.isBlank()) {
-            return properties.indexName();
+            throw new IllegalStateException("ai-search.read-alias 값이 비어 있습니다.");
         }
         return readAlias;
     }

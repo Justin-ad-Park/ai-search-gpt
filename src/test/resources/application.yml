@@ -2,7 +2,8 @@ ai-search:
   elasticsearch-url: ${AI_SEARCH_ES_URL:http://localhost:9200}
   username: ${AI_SEARCH_ES_USERNAME:elastic}
   password: ${AI_SEARCH_ES_PASSWORD:password}
-  index-name: ${AI_SEARCH_ES_INDEX:food-products-v1-test}
+  index-name: ${AI_SEARCH_ES_INDEX:food-products-test}
+  read-alias: ${AI_SEARCH_ES_READ_ALIAS:food-products-read-test}
   synonyms-set: ${AI_SEARCH_SYNONYMS_SET:food-synonyms}
   synonyms-file-path: ${AI_SEARCH_SYNONYMS_FILE_PATH:classpath:es/dictionary/synonyms_ko.txt}
   synonyms-regression-file-path: ${AI_SEARCH_SYNONYMS_REGRESSION_FILE_PATH:classpath:es/dictionary/synonyms_kr_regression.txt}
