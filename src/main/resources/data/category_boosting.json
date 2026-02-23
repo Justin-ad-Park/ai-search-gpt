@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "description": "카테고리 부스팅 샘플 설정",
+  "rules": [
+    {
+      "keyword": "간식",
+      "categoryBoostById": {
+        "1": 0.20,
+        "2": 0.10,
+        "8": 0.10
+      }
+    },
+    {
+      "keyword": "복숭아",
+      "categoryBoostById": {
+        "4": 0.20
+      }
+    },
+    {
+      "keyword": "사과",
+      "categoryBoostById": {
+        "4": 0.20
+      }
+    },
+    {
+      "keyword": "생선",
+      "categoryBoostById": {
+        "7": 0.20
+      }
+    },
+    {
+      "keyword": "오징어",
+      "categoryBoostById": {
+        "7": 0.20
+      }
+    },
+    {
+      "keyword": "고등어",
+      "categoryBoostById": {
+        "7": 0.20
+      }
+    }
+  ]
+}

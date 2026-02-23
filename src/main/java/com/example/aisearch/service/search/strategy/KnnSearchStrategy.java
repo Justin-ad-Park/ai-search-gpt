@@ -78,7 +78,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                         .minScore(properties.minScoreThreshold()),
                 Map.class
         );
-        List<SearchHitResult> results = toResults(response, true);
+        List<SearchHitResult> results = toResults(response);
         return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
@@ -95,7 +95,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                         .size(size),
                 Map.class
         );
-        List<SearchHitResult> results = toResults(response, false);
+        List<SearchHitResult> results = toResults(response);
         return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
@@ -113,17 +113,10 @@ public class KnnSearchStrategy implements SearchStrategy {
         }));
     }
 
-    private List<SearchHitResult> toResults(SearchResponse<Map> response, boolean applyScoreThreshold) {
-        List<SearchHitResult> results = new ArrayList<>();
-        response.hits().hits().forEach(hit -> {
-            String id = hit.id();
-            Double score = hit.score();
-            Map<String, Object> source = hit.source();
-            if (!applyScoreThreshold || (score != null && score >= properties.minScoreThreshold())) {
-                results.add(new SearchHitResult(id, score, stripVector(source)));
-            }
-        });
-        return results;
+    private List<SearchHitResult> toResults(SearchResponse<Map> response) {
+        return response.hits().hits().stream()
+                .map(hit -> new SearchHitResult(hit.id(), hit.score(), stripVector(hit.source())))
+                .toList();
     }
 
     private Map<String, Object> stripVector(Map<String, Object> source) {
