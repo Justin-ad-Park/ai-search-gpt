@@ -58,7 +58,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         Query baseQuery = buildHybridBaseQuery(request, filterQueryBuilder.buildFilterQuery(request));
 
         SearchResponse<Map> response = client.search(s -> s
-                        .index(requireReadAlias())
+                        .index(getReadAlias())
                         .query(q -> q.scriptScore(ss -> ss
                                 .query(baseQuery)
                                 .script(sc -> sc.inline(i -> i
@@ -87,7 +87,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         int from = (int) pageable.getOffset();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
-                        .index(requireReadAlias())
+                        .index(getReadAlias())
                         .query(rootQuery)
                         .sort(request.sortOption().toSortOptions())
                         .trackScores(true)
@@ -150,7 +150,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         return list;
     }
 
-    private String requireReadAlias() {
+    private String getReadAlias() {
         String readAlias = properties.readAlias();
         if (readAlias == null || readAlias.isBlank()) {
             throw new IllegalStateException("ai-search.read-alias 값이 비어 있습니다.");

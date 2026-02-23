@@ -394,7 +394,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     }
 
     private Pageable pageRequest(int page, int size) {
-        return PageRequest.of(page - 1, size);
+        return SearchPagingPolicy.toPageable(page, size);
     }
 
 }
