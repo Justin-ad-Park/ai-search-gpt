@@ -34,6 +34,15 @@ public enum SearchSortOption {
                     fieldSort("id", SortOrder.Asc)
             );
         }
+    },
+    CATEGORY_BOOSTING_DESC {
+        @Override
+        public List<SortOptions> toSortOptions() {
+            return List.of(
+                    scoreSort(SortOrder.Desc),
+                    fieldSort("id", SortOrder.Asc)
+            );
+        }
     }
 //    ,
 //    RELEVANCE_ASC {

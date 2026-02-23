@@ -24,6 +24,12 @@ class SearchRequestTest {
     }
 
     @Test
+    void shouldUseCategoryBoostingSortOption() {
+        SearchRequest request = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        assertEquals(SearchSortOption.CATEGORY_BOOSTING_DESC, request.sortOption());
+    }
+
+    @Test
     void shouldTreatBlankQueryAsOptional() {
         SearchRequest request = new SearchRequest("   ", null, List.of(1, 2, 2), null);
 

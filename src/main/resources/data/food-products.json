@@ -1630,5 +1630,21 @@
     "description": "설에 끓여 먹는 생만두입니다. 국물 요리에 잘 어울리는 담백한 만두입니다.",
     "price": 9800,
     "categoryId": 2
+  },
+  {
+    "id": "204",
+    "productName": "저당 사과잼 (350g)",
+    "category": "간편식",
+    "description": "당을 낮춰 가볍게 먹을 수 있는 사과잼입니다.",
+    "price": 7800,
+    "categoryId": 2
+  },
+  {
+    "id": "205",
+    "productName": "아침에 사과 한 잔",
+    "category": "간식∙음료",
+    "description": "아침 대용으로 마실 수 있는 사과 음료입니다.",
+    "price": 1300,
+    "categoryId": 1
   }
 ]

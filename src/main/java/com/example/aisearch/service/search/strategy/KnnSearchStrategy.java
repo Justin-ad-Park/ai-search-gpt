@@ -8,7 +8,10 @@ import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.search.boosting.CategoryBoostingDecision;
+import com.example.aisearch.service.search.boosting.CategoryBoostingPolicyResolver;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -21,21 +24,47 @@ import java.util.Map;
 @Component
 public class KnnSearchStrategy implements SearchStrategy {
 
+    private static final String SCRIPT_COMMON = """
+            double vectorScore = (cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0;
+            double lexicalScore = Math.min(_score, 5.0) / 5.0;
+            double categoryBoost = 0.0;
+            """;
+
+    private static final String CATEGORY_BOOST_BLOCK = """
+            if (doc['categoryId'].size() != 0) {
+              String categoryKey = String.valueOf(doc['categoryId'].value);
+              def rawBoost = params.category_boost_by_id.get(categoryKey);
+              if (rawBoost != null) {
+                categoryBoost = ((Number) rawBoost).doubleValue();
+              }
+            }
+            """;
+
+    private static final String SCRIPT_RETURN_BLOCK = """
+            return Math.min(1.0, 0.9 * vectorScore + 0.1 * lexicalScore + categoryBoost + 0.1);
+            """;
+
+    private static final String BASE_SCRIPT = SCRIPT_COMMON + SCRIPT_RETURN_BLOCK;
+    private static final String CATEGORY_BOOST_SCRIPT = SCRIPT_COMMON + CATEGORY_BOOST_BLOCK + SCRIPT_RETURN_BLOCK;
+
     private final ElasticsearchClient client;
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final SearchFilterQueryBuilder filterQueryBuilder;
+    private final CategoryBoostingPolicyResolver categoryBoostingPolicyResolver;
 
     public KnnSearchStrategy(
             ElasticsearchClient client,
             AiSearchProperties properties,
             EmbeddingService embeddingService,
-            SearchFilterQueryBuilder filterQueryBuilder
+            SearchFilterQueryBuilder filterQueryBuilder,
+            CategoryBoostingPolicyResolver categoryBoostingPolicyResolver
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.filterQueryBuilder = filterQueryBuilder;
+        this.categoryBoostingPolicyResolver = categoryBoostingPolicyResolver;
     }
 
     @Override
@@ -53,25 +82,29 @@ public class KnnSearchStrategy implements SearchStrategy {
     private SearchPageResult vectorScoreSearch(SearchRequest request, Pageable pageable) throws IOException {
         int size = pageable.getPageSize();
         int from = (int) pageable.getOffset();
+        CategoryBoostingDecision decision = categoryBoostingPolicyResolver.resolve(request);
+        SearchSortOption effectiveSort = decision.effectiveSortOption();
+
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
         Query baseQuery = buildHybridBaseQuery(request, filterQueryBuilder.buildFilterQuery(request));
+        String scriptSource = decision.applyCategoryBoost() ? CATEGORY_BOOST_SCRIPT : BASE_SCRIPT;
 
         SearchResponse<Map> response = client.search(s -> s
                         .index(getReadAlias())
                         .query(q -> q.scriptScore(ss -> ss
                                 .query(baseQuery)
-                                .script(sc -> sc.inline(i -> i
-                                        .lang("painless")
-                                        .source(
-                                                "double vectorScore = (cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0; " +
-                                                "double lexicalScore = Math.min(_score, 5.0) / 5.0; " +
-                                                "return Math.min(1.0, 0.9 * vectorScore + 0.1 * lexicalScore + 0.1);"
-                                        )
-                                        .params("query_vector", JsonData.of(queryVector))
-                                ))
+                                .script(sc -> sc.inline(i -> {
+                                    i.lang("painless")
+                                            .source(scriptSource)
+                                            .params("query_vector", JsonData.of(queryVector));
+                                    if (decision.applyCategoryBoost()) {
+                                        i.params("category_boost_by_id", JsonData.of(decision.categoryBoostById()));
+                                    }
+                                    return i;
+                                }))
                         ))
-                        .sort(request.sortOption().toSortOptions())
+                        .sort(effectiveSort.toSortOptions())
                         .trackScores(true)
                         .from(from)
                         .size(size)
@@ -85,11 +118,12 @@ public class KnnSearchStrategy implements SearchStrategy {
     private SearchPageResult filterOnlySearch(SearchRequest request, Pageable pageable) throws IOException {
         int size = pageable.getPageSize();
         int from = (int) pageable.getOffset();
+        SearchSortOption effectiveSort = categoryBoostingPolicyResolver.resolve(request).effectiveSortOption();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
                         .index(getReadAlias())
                         .query(rootQuery)
-                        .sort(request.sortOption().toSortOptions())
+                        .sort(effectiveSort.toSortOptions())
                         .trackScores(true)
                         .from(from)
                         .size(size),

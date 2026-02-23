@@ -1,0 +1,103 @@
+package com.example.aisearch;
+
+import com.example.aisearch.model.SearchHitResult;
+import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.SearchSortOption;
+import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
+import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
+import com.example.aisearch.service.search.VectorSearchService;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Map;
+
+@SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class CategoryBoostingTest extends TruststoreTestBase {
+
+    @Autowired
+    private IndexRolloutService indexRolloutService;
+
+    @Autowired
+    private VectorSearchService vectorSearchService;
+
+    @Test
+    @Order(1)
+    void reindexSampleDataForCategoryBoostingTests() {
+        IndexRolloutResult rollout = indexRolloutService.rollOutFromSourceData();
+        Assertions.assertTrue(rollout.indexedCount() >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
+    }
+
+    @Test
+    @Order(2)
+    void categoryBoostingSortShouldBoostFruitCategoryForAppleKeyword() {
+        SearchRequest request = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 5)).results();
+
+        Assertions.assertFalse(results.isEmpty(), "카테고리 부스팅 검증을 위한 결과가 필요합니다.");
+        long fruitCount = countCategoryInTopN(results, 5, 4);
+        int topN = Math.min(5, results.size());
+        long expectedMin = Math.min(2, topN);
+        Assertions.assertTrue(fruitCount >= expectedMin,
+                "상위 " + topN + "개 중 categoryId=4(과일) 문서가 최소 " + expectedMin + "개 이상이어야 합니다. actual=" + fruitCount);
+    }
+
+    @Test
+    @Order(3)
+    void categoryBoostingSortShouldFallbackToRelevanceWhenAppleJamKeywordDoesNotMatch() {
+        Pageable pageable = pageRequest(1, 10);
+        SearchRequest categoryBoostSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        SearchRequest relevanceSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.RELEVANCE_DESC);
+
+        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+
+        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+                "키워드 불일치(사과잼) 시 CATEGORY_BOOSTING_DESC는 RELEVANCE_DESC와 동일 순서여야 합니다.");
+    }
+
+    @Test
+    @Order(4)
+    void categoryBoostingSortShouldFallbackToRelevanceWhenQueryIsBlank() {
+        Pageable pageable = pageRequest(1, 10);
+        SearchRequest categoryBoostSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.CATEGORY_BOOSTING_DESC);
+        SearchRequest relevanceSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.RELEVANCE_DESC);
+
+        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+
+        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+                "q가 blank면 CATEGORY_BOOSTING_DESC 요청도 RELEVANCE_DESC와 동일 동작이어야 합니다.");
+    }
+
+    private Integer asInteger(Map<String, Object> source, String key) {
+        Object value = source.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return null;
+    }
+
+    private List<String> extractIds(List<SearchHitResult> results) {
+        return results.stream().map(SearchHitResult::id).toList();
+    }
+
+    private long countCategoryInTopN(List<SearchHitResult> results, int topN, int expectedCategoryId) {
+        return results.stream()
+                .limit(topN)
+                .map(hit -> asInteger(hit.source(), "categoryId"))
+                .filter(categoryId -> categoryId != null && categoryId == expectedCategoryId)
+                .count();
+    }
+
+    private org.springframework.data.domain.Pageable pageRequest(int page, int size) {
+        return com.example.aisearch.model.search.SearchPagingPolicy.toPageable(page, size);
+    }
+}
