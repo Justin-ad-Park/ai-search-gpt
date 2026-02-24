@@ -1,0 +1,11 @@
+{
+  "version": "2.0",
+  "rules": [
+    {
+      "keyword": "사과",
+      "categoryBoostById": {
+        "4": 0.30
+      }
+    }
+  ]
+}

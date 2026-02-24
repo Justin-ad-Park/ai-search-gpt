@@ -62,7 +62,8 @@ class SynonymReloadServiceTest {
                 "classpath:es/dictionary/synonyms_kr_regression.txt",
                 "djl://example",
                 "classpath:/model",
-                0.74
+                0.74,
+                300
         );
     }
 }

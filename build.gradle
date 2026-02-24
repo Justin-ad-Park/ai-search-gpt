@@ -37,6 +37,7 @@ dependencies {
     implementation "ai.djl.huggingface:tokenizers:${djlVersion}"
     implementation "ai.djl.pytorch:pytorch-engine:${djlVersion}"
     runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:${pytorchVersion}"
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

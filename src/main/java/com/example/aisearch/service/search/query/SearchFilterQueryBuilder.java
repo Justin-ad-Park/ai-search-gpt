@@ -16,49 +16,57 @@ public class SearchFilterQueryBuilder {
 
     public Optional<Query> buildFilterQuery(SearchRequest request) {
         List<Query> filters = new ArrayList<>();
-        addPriceFilter(request, filters);
-        addCategoryFilter(request, filters);
+        addPriceFilter(request).ifPresent(filters::add);
+        addCategoryFilter(request).ifPresent(filters::add);
 
+        // 필터가 하나도 없으면 "필터 조건 없음"을 의미하도록 빈 Optional을 반환한다.
         if (filters.isEmpty()) {
             return Optional.empty();
         }
+        // 여러 필터는 bool.filter로 묶인다(점수 가산 없이 조건 통과 여부만 판단).
         return Optional.of(Query.of(q -> q.bool(b -> b.filter(filters))));
     }
 
     public Query buildRootQuery(SearchRequest request) {
+        // 필터가 있으면 필터 쿼리를 루트로 사용하고, 없으면 전체 문서를 대상으로 검색한다.
         return buildFilterQuery(request)
                 .orElseGet(() -> Query.of(q -> q.matchAll(m -> m)));
     }
 
-    private void addPriceFilter(SearchRequest request, List<Query> filters) {
+    private Optional<Query> addPriceFilter(SearchRequest request) {
         if (!request.hasPriceCondition()) {
-            return;
+            return Optional.empty();
         }
         SearchPrice price = request.searchPrice();
-        filters.add(Query.of(q -> q.range(r -> {
+        Query priceFilter = Query.of(q -> q.range(r -> {
             r.field("price");
             if (price.minPrice() != null) {
-                r.gte(JsonData.of(price.minPrice()));   //Greater Than or Equal to 크거나 같은
+                // gte: 최소 가격 이상
+                r.gte(JsonData.of(price.minPrice()));
             }
             if (price.maxPrice() != null) {
-                r.lte(JsonData.of(price.maxPrice()));   //Less Than or Equal to 작거나 같은
+                // lte: 최대 가격 이하
+                r.lte(JsonData.of(price.maxPrice()));
             }
             return r;
-        })));
+        }));
+        return Optional.of(priceFilter);
     }
 
-    private void addCategoryFilter(SearchRequest request, List<Query> filters) {
+    private Optional<Query> addCategoryFilter(SearchRequest request) {
         if (!request.hasCategoryCondition()) {
-            return;
+            return Optional.empty();
         }
         List<FieldValue> values = request.categoryIds().stream()
                 .map(FieldValue::of)
                 .toList();
 
-        filters.add(Query.of(q -> q.terms(t -> t
+        // terms는 SQL의 IN 절과 유사하다: categoryId IN (...)
+        Query categoryFilter = Query.of(q -> q.terms(t -> t
                 .field("categoryId")
-                .terms(tf -> tf.value(values))      //sql로 비유하면 WHERE categoryId IN (1,2,3)
+                .terms(tf -> tf.value(values))
 
-        )));
+        ));
+        return Optional.of(categoryFilter);
     }
 }

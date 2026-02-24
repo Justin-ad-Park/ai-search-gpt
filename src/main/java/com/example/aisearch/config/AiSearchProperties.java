@@ -41,6 +41,10 @@ public record AiSearchProperties(
     /**
      * 검색 결과 필터링 최소 점수
      */
-    double minScoreThreshold
+    double minScoreThreshold,
+    /**
+     * 카테고리 부스팅 룰 캐시 TTL(초)
+     */
+    long categoryBoostCacheTtlSeconds
 ) {
 }

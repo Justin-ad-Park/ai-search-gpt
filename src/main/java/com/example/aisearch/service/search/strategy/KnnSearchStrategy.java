@@ -8,10 +8,9 @@ import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
-import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
-import com.example.aisearch.service.search.boosting.CategoryBoostingDecision;
-import com.example.aisearch.service.search.boosting.CategoryBoostingPolicyResolver;
+import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingDecider;
+import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingResult;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -21,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 검색 요청을 벡터 기반 하이브리드 검색 또는 필터 전용 검색으로 분기해 실행하는 전략.
+ */
 @Component
 public class KnnSearchStrategy implements SearchStrategy {
 
@@ -51,28 +53,30 @@ public class KnnSearchStrategy implements SearchStrategy {
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final SearchFilterQueryBuilder filterQueryBuilder;
-    private final CategoryBoostingPolicyResolver categoryBoostingPolicyResolver;
+    private final CategoryBoostingDecider categoryBoostingDecider;
 
     public KnnSearchStrategy(
             ElasticsearchClient client,
             AiSearchProperties properties,
             EmbeddingService embeddingService,
             SearchFilterQueryBuilder filterQueryBuilder,
-            CategoryBoostingPolicyResolver categoryBoostingPolicyResolver
+            CategoryBoostingDecider categoryBoostingDecider
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.filterQueryBuilder = filterQueryBuilder;
-        this.categoryBoostingPolicyResolver = categoryBoostingPolicyResolver;
+        this.categoryBoostingDecider = categoryBoostingDecider;
     }
 
     @Override
     public SearchPageResult search(SearchRequest searchRequest, Pageable pageable) {
         try {
+            // 검색어가 있으면 임베딩 + script_score 기반 하이브리드 검색을 수행한다.
             if (searchRequest.hasQuery()) {
                 return vectorScoreSearch(searchRequest, pageable);
             }
+            // 검색어가 없으면 필터/정렬만 적용한 일반 검색을 수행한다.
             return filterOnlySearch(searchRequest, pageable);
         } catch (IOException e) {
             throw new IllegalStateException("벡터 검색 실패", e);
@@ -82,14 +86,12 @@ public class KnnSearchStrategy implements SearchStrategy {
     private SearchPageResult vectorScoreSearch(SearchRequest request, Pageable pageable) throws IOException {
         int size = pageable.getPageSize();
         int from = (int) pageable.getOffset();
-        // 요청 1건당 1회만 정책을 계산해 이후 로직의 분기 난립을 막는다.
-        CategoryBoostingDecision decision = categoryBoostingPolicyResolver.resolve(request);
-        SearchSortOption effectiveSort = decision.effectiveSortOption();
+        CategoryBoostingResult decision = categoryBoostingDecider.decide(request);
 
+        // 사용자 질의를 임베딩 벡터로 변환해 cosineSimilarity 계산에 사용한다.
         float[] embedding = embeddingService.embed(request.query());
         List<Float> queryVector = toFloatList(embedding);
         Query baseQuery = buildHybridBaseQuery(request, filterQueryBuilder.buildFilterQuery(request));
-        String scriptSource = decision.applyCategoryBoost() ? CATEGORY_BOOST_SCRIPT : BASE_SCRIPT;
 
         SearchResponse<Map> response = client.search(s -> s
                         .index(getReadAlias())
@@ -97,7 +99,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                                 .query(baseQuery)
                                 .script(sc -> sc.inline(i -> {
                                     i.lang("painless")
-                                            .source(scriptSource)
+                                            .source(selectScriptSource(decision))
                                             .params("query_vector", JsonData.of(queryVector));
                                     // boost 적용 케이스에서만 category boost 파라미터를 전달한다.
                                     if (decision.applyCategoryBoost()) {
@@ -106,7 +108,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                                     return i;
                                 }))
                         ))
-                        .sort(effectiveSort.toSortOptions())
+                        .sort(decision.sortOptions())
                         .trackScores(true)
                         .from(from)
                         .size(size)
@@ -117,15 +119,22 @@ public class KnnSearchStrategy implements SearchStrategy {
         return SearchPageResult.of(pageable, extractTotalHits(response), results);
     }
 
-    private SearchPageResult filterOnlySearch(SearchRequest request, Pageable pageable) throws IOException {
+    private String selectScriptSource(CategoryBoostingResult decision) {
+        // 카테고리 부스팅 필요 여부에 따라 script_score 소스를 선택한다.
+        return decision.applyCategoryBoost() ? CATEGORY_BOOST_SCRIPT : BASE_SCRIPT;
+    }
+
+    private SearchPageResult filterOnlySearch(
+            SearchRequest request,
+            Pageable pageable
+    ) throws IOException {
         int size = pageable.getPageSize();
         int from = (int) pageable.getOffset();
-        SearchSortOption effectiveSort = categoryBoostingPolicyResolver.resolve(request).effectiveSortOption();
         Query rootQuery = filterQueryBuilder.buildRootQuery(request);
         SearchResponse<Map> response = client.search(s -> s
                         .index(getReadAlias())
                         .query(rootQuery)
-                        .sort(effectiveSort.toSortOptions())
+                        .sort(request.sortOption().toSortOptions())
                         .trackScores(true)
                         .from(from)
                         .size(size),
@@ -136,13 +145,16 @@ public class KnnSearchStrategy implements SearchStrategy {
     }
 
     private Query buildHybridBaseQuery(SearchRequest request, java.util.Optional<Query> filterQuery) {
+        // 텍스트 관련도(_score)를 script_score에서 lexicalScore로 함께 반영한다.
         Query lexicalQuery = Query.of(q -> q.multiMatch(mm -> mm
                 .query(request.query())
                 .fields("product_name^2", "description")
         ));
 
         return Query.of(q -> q.bool(b -> {
+            // 필터는 점수 계산과 무관하게 후보군을 제한한다.
             filterQuery.ifPresent(b::filter);
+            // 텍스트 쿼리는 should로 넣어도 minimum_should_match=0 이라 필터만으로도 검색 가능하다.
             b.should(lexicalQuery);
             b.minimumShouldMatch("0");
             return b;
@@ -159,6 +171,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         if (source == null || source.isEmpty()) {
             return source;
         }
+        // 응답 payload 축소를 위해 대용량 벡터 필드를 제거한다.
         Map<String, Object> filtered = new java.util.HashMap<>(source);
         filtered.remove("product_vector");
         return filtered;
