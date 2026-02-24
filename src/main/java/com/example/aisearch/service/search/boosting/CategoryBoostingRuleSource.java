@@ -28,6 +28,7 @@ public class CategoryBoostingRuleSource {
     public CategoryBoostingRuleSource(ResourceLoader resourceLoader, ObjectMapper objectMapper) {
         this.resourceLoader = resourceLoader;
         this.objectMapper = objectMapper;
+        // 애플리케이션 시작 시 1회 로드하여 검색 시점의 I/O 비용을 줄인다.
         this.rulesByKeyword = loadRulesSafely();
     }
 
@@ -43,6 +44,7 @@ public class CategoryBoostingRuleSource {
         try {
             return loadRules();
         } catch (Exception e) {
+            // 룰 파일 문제가 있어도 검색 전체를 실패시키지 않고 빈 룰로 fallback 한다.
             log.warn("카테고리 부스팅 룰 로딩 실패. 빈 룰로 동작합니다. path={}", RULE_FILE_PATH, e);
             return Map.of();
         }
@@ -70,6 +72,7 @@ public class CategoryBoostingRuleSource {
             if (boosts.isEmpty()) {
                 continue;
             }
+            // 동일 키워드 중복 시 마지막 정의가 우선한다.
             ruleMap.put(keyword, boosts);
         }
         return Map.copyOf(ruleMap);

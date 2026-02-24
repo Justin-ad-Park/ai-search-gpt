@@ -82,6 +82,7 @@ public class KnnSearchStrategy implements SearchStrategy {
     private SearchPageResult vectorScoreSearch(SearchRequest request, Pageable pageable) throws IOException {
         int size = pageable.getPageSize();
         int from = (int) pageable.getOffset();
+        // 요청 1건당 1회만 정책을 계산해 이후 로직의 분기 난립을 막는다.
         CategoryBoostingDecision decision = categoryBoostingPolicyResolver.resolve(request);
         SearchSortOption effectiveSort = decision.effectiveSortOption();
 
@@ -98,6 +99,7 @@ public class KnnSearchStrategy implements SearchStrategy {
                                     i.lang("painless")
                                             .source(scriptSource)
                                             .params("query_vector", JsonData.of(queryVector));
+                                    // boost 적용 케이스에서만 category boost 파라미터를 전달한다.
                                     if (decision.applyCategoryBoost()) {
                                         i.params("category_boost_by_id", JsonData.of(decision.categoryBoostById()));
                                     }
