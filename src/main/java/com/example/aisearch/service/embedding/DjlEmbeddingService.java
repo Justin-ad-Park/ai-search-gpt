@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 텍스트를 숫자 벡터(임베딩)로 바꿔주는 서비스입니다.
@@ -98,12 +100,18 @@ public class DjlEmbeddingService implements EmbeddingService {
     }
 
     @Override
-    public float[] embed(String text) {
+    public List<Float> toEmbeddingVector(String text) {
         // 1) 모델 추론으로 원본 벡터 생성
         // 2) L2 정규화로 벡터 길이를 1로 맞춘다.
         //    코사인 유사도 계산 시 더 안정적이고 일관된 결과를 얻을 수 있다.
         float[] raw = predictRaw(text);
-        return l2Normalize(raw);
+        float[] normalized = l2Normalize(raw);
+
+        List<Float> values = new ArrayList<>(normalized.length);
+        for (float value : normalized) {
+            values.add(value);
+        }
+        return values;
     }
 
     @Override

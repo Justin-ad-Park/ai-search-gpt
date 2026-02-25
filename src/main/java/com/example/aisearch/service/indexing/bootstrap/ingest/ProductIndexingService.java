@@ -37,11 +37,10 @@ public class ProductIndexingService {
         List<IndexDocument> documents = foods.stream()
                 .map(food -> documentMapper.toIndexDocument(
                         food,
-                        embeddingService.embed(food.toEmbeddingText())
+                        embeddingService.toEmbeddingVector(food.toEmbeddingText())
                 ))
                 .collect(Collectors.toList());
 
-        // refresh=wait_for로 바로 검색 가능 상태로 만듦 (색인 직후 검색 테스트 용도)
         return bulkIndexingExecutor.bulkIndex(indexName, documents);
     }
 }

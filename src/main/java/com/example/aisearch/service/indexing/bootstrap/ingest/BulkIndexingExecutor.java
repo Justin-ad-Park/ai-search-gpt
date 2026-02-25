@@ -33,6 +33,11 @@ public class BulkIndexingExecutor {
         }
 
         try {
+            /*
+              1. refresh=wait_for
+                - 색인 후 “검색 가능해질 때까지” 응답을 기다립니다.
+                - 실서비스에서 가장 무난한 선택입니다.
+             */
             var response = client.bulk(bulkBuilder.refresh(Refresh.WaitFor).build());
             if (response.errors()) {
                 throw new IllegalStateException("Bulk 인덱싱 중 일부 실패: " + summarizeBulkErrors(response));
