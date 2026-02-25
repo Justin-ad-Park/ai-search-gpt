@@ -9,6 +9,7 @@ import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingDecider;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingResult;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
@@ -29,6 +30,8 @@ public class KnnSearchStrategy implements SearchStrategy {
     private static final String SCRIPT_COMMON = """
             double vectorScore = (cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0;
             double lexicalScore = Math.min(_score, 5.0) / 5.0;
+            double base = 0.9 * vectorScore + 0.1 * lexicalScore;
+            if (base < params.min_score_threshold) return 0.0;
             double categoryBoost = 0.0;
             """;
 
@@ -43,7 +46,8 @@ public class KnnSearchStrategy implements SearchStrategy {
             """;
 
     private static final String SCRIPT_RETURN_BLOCK = """
-            return Math.min(1.0, 0.9 * vectorScore + 0.1 * lexicalScore + categoryBoost + 0.1);
+            double finalScore = base * (1.0 + params.beta * categoryBoost);
+            return finalScore;
             """;
 
     private static final String BASE_SCRIPT = SCRIPT_COMMON + SCRIPT_RETURN_BLOCK;
@@ -53,6 +57,7 @@ public class KnnSearchStrategy implements SearchStrategy {
     private final AiSearchProperties properties;
     private final EmbeddingService embeddingService;
     private final SearchFilterQueryBuilder filterQueryBuilder;
+    private final CategoryBoostBetaTuner categoryBoostBetaTuner;
     private final CategoryBoostingDecider categoryBoostingDecider;
 
     public KnnSearchStrategy(
@@ -60,12 +65,14 @@ public class KnnSearchStrategy implements SearchStrategy {
             AiSearchProperties properties,
             EmbeddingService embeddingService,
             SearchFilterQueryBuilder filterQueryBuilder,
+            CategoryBoostBetaTuner categoryBoostBetaTuner,
             CategoryBoostingDecider categoryBoostingDecider
     ) {
         this.client = client;
         this.properties = properties;
         this.embeddingService = embeddingService;
         this.filterQueryBuilder = filterQueryBuilder;
+        this.categoryBoostBetaTuner = categoryBoostBetaTuner;
         this.categoryBoostingDecider = categoryBoostingDecider;
     }
 
@@ -110,7 +117,9 @@ public class KnnSearchStrategy implements SearchStrategy {
                                                         {
                                                             i.lang("painless")
                                                                     .source(selectScriptSource(decision))
-                                                                    .params("query_vector", JsonData.of(queryVector));
+                                                                    .params("query_vector", JsonData.of(queryVector))
+                                                                    .params("min_score_threshold", JsonData.of(properties.minScoreThreshold()))
+                                                                    .params("beta", JsonData.of(categoryBoostBetaTuner.getBeta()));
                                                             // boost 적용 케이스에서만 category boost 파라미터를 전달한다.
                                                             if (decision.applyCategoryBoost()) {
                                                                 i.params("category_boost_by_id", JsonData.of(decision.categoryBoostById()));

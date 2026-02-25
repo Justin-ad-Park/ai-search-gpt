@@ -5,7 +5,9 @@ import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
+import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
 import com.example.aisearch.service.search.VectorSearchService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -27,6 +29,14 @@ class CategoryBoostingTest extends TruststoreTestBase {
 
     @Autowired
     private VectorSearchService vectorSearchService;
+
+    @Autowired
+    private CategoryBoostBetaTuner categoryBoostBetaTuner;
+
+    @AfterEach
+    void resetBeta() {
+        categoryBoostBetaTuner.reset();
+    }
 
     @Test
     @Order(1)
@@ -75,6 +85,22 @@ class CategoryBoostingTest extends TruststoreTestBase {
 
         Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
                 "q가 blank면 CATEGORY_BOOSTING_DESC 요청도 RELEVANCE_DESC와 동일 동작이어야 합니다.");
+    }
+
+    @Test
+    @Order(5)
+    void categoryBoostingShouldHaveNoEffectWhenBetaIsZero() {
+        categoryBoostBetaTuner.setBeta(0.0);
+
+        Pageable pageable = pageRequest(1, 10);
+        SearchRequest categoryBoostSortRequest = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        SearchRequest relevanceSortRequest = new SearchRequest("사과", null, null, SearchSortOption.RELEVANCE_DESC);
+
+        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+
+        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+                "beta=0이면 카테고리 부스트 룰 영향은 0이어야 하며 CATEGORY_BOOSTING_DESC와 RELEVANCE_DESC 순서는 동일해야 합니다.");
     }
 
     private Integer asInteger(Map<String, Object> source, String key) {

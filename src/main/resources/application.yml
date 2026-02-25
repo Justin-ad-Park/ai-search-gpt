@@ -14,7 +14,7 @@ ai-search:
   ## **  embedding-model-path 우선 적용하며, 없으면 model-url 사용함  **
   embedding-model-path: ${AI_SEARCH_EMBED_MODEL_PATH:classpath:/model/multilingual-e5-small-ko-v2}
   embedding-model-url: ${AI_SEARCH_EMBED_MODEL:djl://ai.djl.huggingface.pytorch/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
-  min-score-threshold: ${AI_SEARCH_MIN_SCORE:0.74}
+  min-score-threshold: ${AI_SEARCH_MIN_SCORE:0.71}
   category-boost-cache-ttl-seconds: ${AI_SEARCH_CATEGORY_BOOST_CACHE_TTL_SECONDS:300}
   k8s:
     auto-port-forward: ${AI_SEARCH_AUTO_PORT_FORWARD:true}

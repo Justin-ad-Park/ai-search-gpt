@@ -23,6 +23,8 @@ class KnnSearchRequestSerializationTest {
     private static final String SCRIPT_COMMON = """
             double vectorScore = (cosineSimilarity(params.query_vector, 'product_vector') + 1.0) / 2.0;
             double lexicalScore = Math.min(_score, 5.0) / 5.0;
+            double base = 0.9 * vectorScore + 0.1 * lexicalScore;
+            if (base < params.min_score_threshold) return 0.0;
             double categoryBoost = 0.0;
             """;
 
@@ -37,7 +39,8 @@ class KnnSearchRequestSerializationTest {
             """;
 
     private static final String SCRIPT_RETURN_BLOCK = """
-            return Math.min(1.0, 0.9 * vectorScore + 0.1 * lexicalScore + categoryBoost + 0.1);
+            double finalScore = base * (1.0 + params.beta * categoryBoost);
+            return finalScore;
             """;
 
     private static final String BASE_SCRIPT = SCRIPT_COMMON + SCRIPT_RETURN_BLOCK;
@@ -63,7 +66,9 @@ class KnnSearchRequestSerializationTest {
                         .script(sc -> sc.inline(i -> {
                             i.lang("painless")
                                     .source(selectScriptSource(boostDecision))
-                                    .params("query_vector", JsonData.of(List.of(0.11f, 0.22f, 0.33f)));
+                                    .params("query_vector", JsonData.of(List.of(0.11f, 0.22f, 0.33f)))
+                                    .params("min_score_threshold", JsonData.of(0.74))
+                                    .params("beta", JsonData.of(1.0));
                             if (boostDecision.applyCategoryBoost()) {
                                 i.params("category_boost_by_id", JsonData.of(boostDecision.categoryBoostById()));
                             }
@@ -104,6 +109,9 @@ class KnnSearchRequestSerializationTest {
 
         assertTrue(appleJson.contains("\"script_score\""));
         assertTrue(appleJson.contains("\"category_boost_by_id\""));
+        assertTrue(appleJson.contains("\"min_score_threshold\""));
+        assertTrue(appleJson.contains("\"beta\""));
+        assertTrue(!appleJson.contains("Math.min(1.0"));
         assertTrue(filterOnlyJson.contains("\"terms\""));
         assertTrue(!filterOnlyJson.contains("\"script_score\""));
     }
