@@ -6,7 +6,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,17 +27,16 @@ class JsonCategoryBoostRulesTest {
 
     @Test
     void shouldReloadRulesWhenVersionChangesByPathSwitching() {
-        AtomicReference<String> pathRef = new AtomicReference<>("classpath:data/category_boosting_v1.json");
         JsonCategoryBoostRules rules = new JsonCategoryBoostRules(
                 new DefaultResourceLoader(),
                 new ObjectMapper(),
-                pathRef::get,
+                "classpath:data/category_boosting_v1.json",
                 300
         );
 
         assertEquals(0.20, rules.findByKeyword("사과").orElseThrow().get("4"));
 
-        pathRef.set("classpath:data/category_boosting_v2.json");
+        rules.setRuleFilePath("classpath:data/category_boosting_v2.json");
         rules.reload();
 
         assertEquals(0.30, rules.findByKeyword("사과").orElseThrow().get("4"));

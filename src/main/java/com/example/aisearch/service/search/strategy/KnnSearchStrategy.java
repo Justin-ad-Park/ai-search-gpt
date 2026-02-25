@@ -93,26 +93,40 @@ public class KnnSearchStrategy implements SearchStrategy {
         List<Float> queryVector = toFloatList(embedding);
         Query baseQuery = buildHybridBaseQuery(request, filterQueryBuilder.buildFilterQuery(request));
 
-        SearchResponse<Map> response = client.search(s -> s
+        SearchResponse<Map> response
+                = client.search(s -> s  /* SearchRequest.Builder */
                         .index(getReadAlias())
-                        .query(q -> q.scriptScore(ss -> ss
-                                .query(baseQuery)
-                                .script(sc -> sc.inline(i -> {
-                                    i.lang("painless")
-                                            .source(selectScriptSource(decision))
-                                            .params("query_vector", JsonData.of(queryVector));
-                                    // boost 적용 케이스에서만 category boost 파라미터를 전달한다.
-                                    if (decision.applyCategoryBoost()) {
-                                        i.params("category_boost_by_id", JsonData.of(decision.categoryBoostById()));
-                                    }
-                                    return i;
-                                }))
-                        ))
+                        .query(
+                        /* Query.Builder */
+                        q -> q.scriptScore(
+                                /* ScriptScoreQuery.Builder */
+                                ss -> ss
+                                        .query(baseQuery)
+                                        .script(
+                                                /* Script.Builder */
+                                                sc -> sc.inline(
+                                                        /* InlineScript.Builder */
+                                                        i ->
+                                                        {
+                                                            i.lang("painless")
+                                                                    .source(selectScriptSource(decision))
+                                                                    .params("query_vector", JsonData.of(queryVector));
+                                                            // boost 적용 케이스에서만 category boost 파라미터를 전달한다.
+                                                            if (decision.applyCategoryBoost()) {
+                                                                i.params("category_boost_by_id", JsonData.of(decision.categoryBoostById()));
+                                                            }
+                                                            return i;
+                                                        }
+                                                )
+                                        )
+                                )
+                        )
                         .sort(decision.sortOptions())
                         .trackScores(true)
                         .from(from)
                         .size(size)
-                        .minScore(properties.minScoreThreshold()),
+                        .minScore(properties.minScoreThreshold())
+                ,
                 Map.class
         );
         List<SearchHitResult> results = toResults(response);
@@ -145,7 +159,7 @@ public class KnnSearchStrategy implements SearchStrategy {
     }
 
     private Query buildHybridBaseQuery(SearchRequest request, java.util.Optional<Query> filterQuery) {
-        // 텍스트 관련도(_score)를 script_score에서 lexicalScore로 함께 반영한다.
+        // 텍스트 연관도(_score)를 script_score에서 lexicalScore로 함께 반영한다.
         Query lexicalQuery = Query.of(q -> q.multiMatch(mm -> mm
                 .query(request.query())
                 .fields("product_name^2", "description")

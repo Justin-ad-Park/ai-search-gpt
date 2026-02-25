@@ -24,8 +24,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
+/**
+ * category_boosting.json 기반 룰 저장소 구현체.
+ * 조회 계약(CategoryBoostRules)과 재로딩 계약(CategoryBoostRulesReloader)을 함께 제공한다.
+ */
 @Component
 public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoostRulesReloader {
 
@@ -35,37 +38,35 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
 
     private final ResourceLoader resourceLoader;
     private final ObjectMapper objectMapper;
-    private final Supplier<String> ruleFilePathSupplier;
+    private volatile String ruleFilePath;
     private final Cache<String, Boolean> versionCheckGate;
+    // JsonCategoryBoostRules_AtomicReference.md 문서 참고
     private final AtomicReference<CategoryBoostCacheEntry> currentEntry;
 
+    // 스프링 빈 생성용 기본 생성자:
+    // 운영 기본 룰 경로(classpath:data/category_boosting.json)와
+    // application.yaml의 TTL 설정값(category-boost-cache-ttl-seconds)을 사용한다.
     @Autowired
     public JsonCategoryBoostRules(
             ResourceLoader resourceLoader,
             ObjectMapper objectMapper,
             AiSearchProperties properties
     ) {
-        this(resourceLoader, objectMapper, () -> RULE_FILE_PATH, properties.categoryBoostCacheTtlSeconds());
+        this(resourceLoader, objectMapper, RULE_FILE_PATH, properties.categoryBoostCacheTtlSeconds());
     }
 
+    // 테스트/수동 구성용 생성자:
+    // 호출자가 룰 파일 경로와 TTL을 직접 지정할 수 있다.
     public JsonCategoryBoostRules(
             ResourceLoader resourceLoader,
             ObjectMapper objectMapper,
             String ruleFilePath,
             long cacheTtlSeconds
     ) {
-        this(resourceLoader, objectMapper, () -> ruleFilePath, cacheTtlSeconds);
-    }
-
-    JsonCategoryBoostRules(
-            ResourceLoader resourceLoader,
-            ObjectMapper objectMapper,
-            Supplier<String> ruleFilePathSupplier,
-            long cacheTtlSeconds
-    ) {
         this.resourceLoader = resourceLoader;
         this.objectMapper = objectMapper;
-        this.ruleFilePathSupplier = ruleFilePathSupplier;
+        this.ruleFilePath = ruleFilePath;
+        // 룰 파일 버전을 매 호출마다 확인하면 I/O 비용이 커지므로 TTL 동안 버전 체크를 생략한다.
         this.versionCheckGate = Caffeine.newBuilder()
                 .maximumSize(1)
                 .expireAfterWrite(Duration.ofSeconds(Math.max(1L, cacheTtlSeconds)))
@@ -74,11 +75,27 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
         loadInitialRules();
     }
 
+    // 테스트나 운영 제어 코드에서 룰 경로를 교체할 때 사용한다.
+    // 경로 변경 직후 다음 조회/재로딩에서 새 파일을 반영하도록 version check gate를 비운다.
+    void setRuleFilePath(String ruleFilePath) {
+        this.ruleFilePath = ruleFilePath;
+        this.versionCheckGate.invalidate(VERSION_CHECK_GATE_KEY);
+    }
+
+    /**
+     *
+     * @param keyword 정규화된 검색어(trim 이후)
+     * @return
+     * Map<String, Double>
+     *     String : 카테고리 ID
+     *      Double : 가중치 (예: 0.2)
+     */
     @Override
     public Optional<Map<String, Double>> findByKeyword(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return Optional.empty();
         }
+        // TTL이 만료된 시점에만 버전 변경 여부를 확인해 필요 시 재로딩한다.
         refreshIfNeeded();
         Map<String, Double> boosts = currentEntry.get().rulesByKeyword().get(keyword);
         return boosts == null ? Optional.empty() : Optional.of(boosts);
@@ -87,6 +104,7 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
     @Override
     public void reload() {
         synchronized (this) {
+            // 운영 중 수동 reload 요청 시 즉시 버전 확인/재로딩을 시도한다.
             if (checkAndReloadIfVersionChanged()) {
                 versionCheckGate.put(VERSION_CHECK_GATE_KEY, Boolean.TRUE);
             }
@@ -99,6 +117,7 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
             currentEntry.set(loadAll(path));
             versionCheckGate.put(VERSION_CHECK_GATE_KEY, Boolean.TRUE);
         } catch (Exception e) {
+            // 초기 로딩 실패로 서비스 전체가 죽지 않도록 빈 룰로 시작한다.
             log.warn("카테고리 부스팅 초기 룰 로딩 실패. 빈 룰로 동작합니다. path={}", path, e);
         }
     }
@@ -122,11 +141,13 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
         try {
             String newVersion = readVersion(path);
             CategoryBoostCacheEntry cached = currentEntry.get();
+            // version 값이 바뀐 경우에만 전체 룰을 다시 읽어 캐시를 교체한다.
             if (!Objects.equals(cached.version(), newVersion)) {
                 currentEntry.set(loadAll(path));
             }
             return true;
         } catch (Exception e) {
+            // 재로딩 중 오류가 나도 기존 캐시를 유지해 검색 품질 급락을 방지한다.
             log.warn("카테고리 부스팅 룰 버전 확인/재로딩 실패. 기존 캐시를 유지합니다. path={}", path, e);
             return false;
         }
@@ -169,6 +190,7 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
             if (keyword.isBlank()) {
                 continue;
             }
+            // 유효한 keyword + boost 맵이 모두 있을 때만 룰로 채택한다.
             Map<String, Double> boosts = normalizeBoostMap(rule.categoryBoostById());
             if (boosts.isEmpty()) {
                 continue;
@@ -189,13 +211,14 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
             if (key == null || key.isBlank() || value == null) {
                 continue;
             }
+            // JSON 객체 키와 Painless params 맵 조회를 맞추기 위해 카테고리 ID를 문자열 키로 유지한다.
             normalized.put(key.trim(), value);
         }
         return Map.copyOf(normalized);
     }
 
     private String currentRulePath() {
-        String path = ruleFilePathSupplier.get();
+        String path = ruleFilePath;
         if (path == null || path.isBlank()) {
             throw new IllegalStateException("카테고리 부스팅 룰 파일 경로가 비어 있습니다.");
         }

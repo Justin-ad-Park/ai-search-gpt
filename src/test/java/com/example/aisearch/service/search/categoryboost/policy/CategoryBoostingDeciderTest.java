@@ -21,7 +21,7 @@ class CategoryBoostingDeciderTest {
         CategoryBoostingResult result = decider.decide(request);
 
         assertFalse(result.applyCategoryBoost());
-        assertEquals(SearchSortOption.PRICE_ASC, result.effectiveSortOption());
+        assertEquals(SearchSortOption.PRICE_ASC, result.searchSortOption());
     }
 
     @Test
@@ -35,7 +35,7 @@ class CategoryBoostingDeciderTest {
         CategoryBoostingResult result = decider.decide(request);
 
         assertTrue(result.applyCategoryBoost());
-        assertEquals(SearchSortOption.CATEGORY_BOOSTING_DESC, result.effectiveSortOption());
+        assertEquals(SearchSortOption.CATEGORY_BOOSTING_DESC, result.searchSortOption());
         assertEquals(0.2, result.categoryBoostById().get("1"));
     }
 
@@ -48,6 +48,6 @@ class CategoryBoostingDeciderTest {
         CategoryBoostingResult result = decider.decide(request);
 
         assertFalse(result.applyCategoryBoost());
-        assertEquals(SearchSortOption.RELEVANCE_DESC, result.effectiveSortOption());
+        assertEquals(SearchSortOption.RELEVANCE_DESC, result.searchSortOption());
     }
 }
