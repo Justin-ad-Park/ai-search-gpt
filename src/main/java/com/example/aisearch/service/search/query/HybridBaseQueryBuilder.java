@@ -21,9 +21,9 @@ public class HybridBaseQueryBuilder {
         return Query.of(q -> q.bool(b -> {
             filterQuery.ifPresent(b::filter);
             b.should(lexicalQuery);
+            // vector-first 전략: 텍스트 should가 불일치여도 벡터/필터 기준으로 후보를 허용한다.
             b.minimumShouldMatch("0");
             return b;
         }));
     }
 }
-

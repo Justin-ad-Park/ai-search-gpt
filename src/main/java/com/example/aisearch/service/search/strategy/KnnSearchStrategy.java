@@ -63,7 +63,7 @@ public class KnnSearchStrategy implements SearchStrategy {
             // 검색어가 없으면 필터/정렬만 적용한 일반 검색을 수행한다.
             return filterOnlySearch(searchRequest, pageable);
         } catch (IOException e) {
-            throw new IllegalStateException("벡터 검색 실패", e);
+            throw new IllegalStateException("검색 요청 실패", e);
         }
     }
 
