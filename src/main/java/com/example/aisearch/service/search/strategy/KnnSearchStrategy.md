@@ -130,7 +130,7 @@
 - `KnnSearchStrategy.java`
 - `CategoryBoostingDecider.java`
 - `CategoryBoostingResult.java`
-- `SearchRequest.java` (query/sort 정규화)
+- `ProductSearchRequest.java` (query/sort 정규화)
 
 ## 6) 쿼리 비교: "사과 + CATEGORY_BOOSTING_DESC" vs "키워드 없음 + categoryId 필터 + RELEVANCE_DESC"
 

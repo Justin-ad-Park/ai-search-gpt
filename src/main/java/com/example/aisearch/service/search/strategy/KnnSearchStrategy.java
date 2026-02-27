@@ -5,7 +5,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.search.SearchPageResult;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.service.embedding.EmbeddingService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingDecider;
 import com.example.aisearch.service.search.query.HybridBaseQueryBuilder;
@@ -54,7 +54,7 @@ public class KnnSearchStrategy implements SearchStrategy {
     }
 
     @Override
-    public SearchPageResult search(SearchRequest searchRequest, Pageable pageable) {
+    public SearchPageResult search(ProductSearchRequest searchRequest, Pageable pageable) {
         try {
             // 검색어가 있으면 임베딩 + script_score 기반 하이브리드 검색을 수행한다.
             if (searchRequest.hasQuery()) {
@@ -67,7 +67,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         }
     }
 
-    private SearchPageResult hybridSearch(SearchRequest request, Pageable pageable) throws IOException {
+    private SearchPageResult hybridSearch(ProductSearchRequest request, Pageable pageable) throws IOException {
 
         // 사용자 질의를 임베딩 벡터로 변환해 cosineSimilarity 계산에 사용한다.
         Query baseQuery = hybridBaseQueryBuilder.build(request, filterQueryBuilder.buildFilterQuery(request));
@@ -85,7 +85,7 @@ public class KnnSearchStrategy implements SearchStrategy {
     }
 
     private SearchPageResult filterOnlySearch(
-            SearchRequest request,
+            ProductSearchRequest request,
             Pageable pageable
     ) throws IOException {
         co.elastic.clients.elasticsearch.core.SearchRequest esSearchRequest = searchRequestBuilder.buildFilterOnlyRequest(

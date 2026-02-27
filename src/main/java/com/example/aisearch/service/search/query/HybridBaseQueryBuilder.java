@@ -1,7 +1,7 @@
 package com.example.aisearch.service.search.query;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -12,7 +12,7 @@ import java.util.Optional;
 @Component
 public class HybridBaseQueryBuilder {
 
-    public Query build(SearchRequest request, Optional<Query> filterQuery) {
+    public Query build(ProductSearchRequest request, Optional<Query> filterQuery) {
         Query lexicalQuery = Query.of(q -> q.multiMatch(mm -> mm
                 .query(request.query())
                 .fields("product_name^2", "description")

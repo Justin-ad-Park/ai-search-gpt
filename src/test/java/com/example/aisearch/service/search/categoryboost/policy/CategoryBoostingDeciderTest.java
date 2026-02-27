@@ -1,6 +1,6 @@
 package com.example.aisearch.service.search.categoryboost.policy;
 
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.search.categoryboost.api.CategoryBoostRules;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ class CategoryBoostingDeciderTest {
         CategoryBoostRules rules = keyword -> Optional.of(Map.of("1", 0.2));
         CategoryBoostingDecider decider = new CategoryBoostingDecider(rules);
 
-        SearchRequest request = new SearchRequest("간식", null, null, SearchSortOption.PRICE_ASC);
+        ProductSearchRequest request = new ProductSearchRequest("간식", null, null, SearchSortOption.PRICE_ASC);
         CategoryBoostingResult result = decider.decide(request);
 
         assertFalse(result.applyCategoryBoost());
@@ -31,7 +31,7 @@ class CategoryBoostingDeciderTest {
                 : Optional.empty();
         CategoryBoostingDecider decider = new CategoryBoostingDecider(rules);
 
-        SearchRequest request = new SearchRequest("  간식  ", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest request = new ProductSearchRequest("  간식  ", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         CategoryBoostingResult result = decider.decide(request);
 
         assertTrue(result.applyCategoryBoost());
@@ -44,7 +44,7 @@ class CategoryBoostingDeciderTest {
         CategoryBoostRules rules = keyword -> Optional.empty();
         CategoryBoostingDecider decider = new CategoryBoostingDecider(rules);
 
-        SearchRequest request = new SearchRequest("오징어 튀김", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest request = new ProductSearchRequest("오징어 튀김", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         CategoryBoostingResult result = decider.decide(request);
 
         assertFalse(result.applyCategoryBoost());

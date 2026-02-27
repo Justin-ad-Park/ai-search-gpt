@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.json.JsonData;
 import com.example.aisearch.model.search.SearchPrice;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.Optional;
 @Component
 public class SearchFilterQueryBuilder {
 
-    public Optional<Query> buildFilterQuery(SearchRequest request) {
+    public Optional<Query> buildFilterQuery(ProductSearchRequest request) {
         List<Query> filters = new ArrayList<>();
         addPriceFilter(request).ifPresent(filters::add);
         addCategoryFilter(request).ifPresent(filters::add);
@@ -27,13 +27,13 @@ public class SearchFilterQueryBuilder {
         return Optional.of(Query.of(q -> q.bool(b -> b.filter(filters))));
     }
 
-    public Query buildRootQuery(SearchRequest request) {
+    public Query buildRootQuery(ProductSearchRequest request) {
         // 필터가 있으면 필터 쿼리를 루트로 사용하고, 없으면 전체 문서를 대상으로 검색한다.
         return buildFilterQuery(request)
                 .orElseGet(() -> Query.of(q -> q.matchAll(m -> m)));
     }
 
-    private Optional<Query> addPriceFilter(SearchRequest request) {
+    private Optional<Query> addPriceFilter(ProductSearchRequest request) {
         if (!request.hasPriceCondition()) {
             return Optional.empty();
         }
@@ -53,7 +53,7 @@ public class SearchFilterQueryBuilder {
         return Optional.of(priceFilter);
     }
 
-    private Optional<Query> addCategoryFilter(SearchRequest request) {
+    private Optional<Query> addCategoryFilter(ProductSearchRequest request) {
         if (!request.hasCategoryCondition()) {
             return Optional.empty();
         }

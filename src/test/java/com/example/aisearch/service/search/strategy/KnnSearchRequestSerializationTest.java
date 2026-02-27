@@ -54,8 +54,8 @@ class KnnSearchRequestSerializationTest {
 
     @Test
     void shouldPrintSerializedSearchRequestJsonForTwoRepresentativeCases() throws Exception {
-        com.example.aisearch.model.search.SearchRequest appleRequest =
-                new com.example.aisearch.model.search.SearchRequest(
+        com.example.aisearch.model.search.ProductSearchRequest appleRequest =
+                new com.example.aisearch.model.search.ProductSearchRequest(
                         "사과",
                         null,
                         null,
@@ -72,8 +72,8 @@ class KnnSearchRequestSerializationTest {
                 20
         );
 
-        com.example.aisearch.model.search.SearchRequest filterOnlyRequest =
-                new com.example.aisearch.model.search.SearchRequest(
+        com.example.aisearch.model.search.ProductSearchRequest filterOnlyRequest =
+                new com.example.aisearch.model.search.ProductSearchRequest(
                         null,
                         null,
                         DUMMY_CATEGORY_IDS,

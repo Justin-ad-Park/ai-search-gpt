@@ -6,7 +6,7 @@ import com.example.aisearch.controller.dto.SearchResponseDto;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchPagingPolicy;
 import com.example.aisearch.model.search.SearchPrice;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.search.ProductSearchService;
 import com.example.aisearch.service.synonym.SynonymReloadRequest;
@@ -50,13 +50,13 @@ public class SearchController {
             @RequestParam(value = "categoryId", required = false) List<Integer> categoryIds,
             @RequestParam(value = "sort", defaultValue = "RELEVANCE_DESC") SearchSortOption sortOption
     ) {
-        SearchRequest request;
+        ProductSearchRequest request;
         Pageable pageable;
         try {
             SearchPrice searchPrice = (minPrice == null && maxPrice == null)
                     ? null
                     : new SearchPrice(minPrice, maxPrice);
-            request = new SearchRequest(query, searchPrice, categoryIds, sortOption);
+            request = new ProductSearchRequest(query, searchPrice, categoryIds, sortOption);
             pageable = SearchPagingPolicy.toPageable(page, size);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);

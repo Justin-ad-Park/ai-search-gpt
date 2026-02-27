@@ -1,6 +1,6 @@
 package com.example.aisearch.service.search.categoryboost.policy;
 
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.search.categoryboost.api.CategoryBoostRules;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ public class CategoryBoostingDecider {
      * CATEGORY_BOOSTING_DESC 요청에서만 룰 매칭을 시도하고,
      * query 없음/불일치 시 RELEVANCE_DESC 로 안전하게 fallback 한다.
      */
-    public CategoryBoostingResult decide(SearchRequest request) {
+    public CategoryBoostingResult decide(ProductSearchRequest request) {
         // CATEGORY_BOOSTING_DESC 요청이 아니면 부스팅 없이 요청 정렬을 그대로 사용한다.
         if (request.sortOption() != SearchSortOption.CATEGORY_BOOSTING_DESC) {
             return CategoryBoostingResult.withoutBoost(request.sortOption());

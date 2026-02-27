@@ -1,7 +1,7 @@
 package com.example.aisearch;
 
 import com.example.aisearch.model.SearchHitResult;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
@@ -48,7 +48,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
     @Test
     @Order(2)
     void categoryBoostingSortShouldBoostFruitCategoryForAppleKeyword() {
-        SearchRequest request = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest request = new ProductSearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 5)).results();
 
         Assertions.assertFalse(results.isEmpty(), "카테고리 부스팅 검증을 위한 결과가 필요합니다.");
@@ -63,8 +63,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
     @Order(3)
     void categoryBoostingSortShouldFallbackToRelevanceWhenAppleJamKeywordDoesNotMatch() {
         Pageable pageable = pageRequest(1, 10);
-        SearchRequest categoryBoostSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
-        SearchRequest relevanceSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.RELEVANCE_DESC);
+        ProductSearchRequest categoryBoostSortRequest = new ProductSearchRequest("사과잼", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest relevanceSortRequest = new ProductSearchRequest("사과잼", null, null, SearchSortOption.RELEVANCE_DESC);
 
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
@@ -77,8 +77,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
     @Order(4)
     void categoryBoostingSortShouldFallbackToRelevanceWhenQueryIsBlank() {
         Pageable pageable = pageRequest(1, 10);
-        SearchRequest categoryBoostSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.CATEGORY_BOOSTING_DESC);
-        SearchRequest relevanceSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.RELEVANCE_DESC);
+        ProductSearchRequest categoryBoostSortRequest = new ProductSearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest relevanceSortRequest = new ProductSearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.RELEVANCE_DESC);
 
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
@@ -93,8 +93,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
         categoryBoostBetaTuner.setBeta(0.0);
 
         Pageable pageable = pageRequest(1, 10);
-        SearchRequest categoryBoostSortRequest = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
-        SearchRequest relevanceSortRequest = new SearchRequest("사과", null, null, SearchSortOption.RELEVANCE_DESC);
+        ProductSearchRequest categoryBoostSortRequest = new ProductSearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
+        ProductSearchRequest relevanceSortRequest = new ProductSearchRequest("사과", null, null, SearchSortOption.RELEVANCE_DESC);
 
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();

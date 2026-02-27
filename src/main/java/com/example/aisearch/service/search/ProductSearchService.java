@@ -1,7 +1,7 @@
 package com.example.aisearch.service.search;
 
 import com.example.aisearch.model.search.SearchPageResult;
-import com.example.aisearch.model.search.SearchRequest;
+import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.service.search.strategy.SearchStrategy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ public class ProductSearchService {
         this.searchStrategy = searchStrategy;
     }
 
-    public SearchPageResult searchPage(SearchRequest searchRequest, Pageable pageable) {
+    public SearchPageResult searchPage(ProductSearchRequest searchRequest, Pageable pageable) {
         return searchStrategy.search(searchRequest, pageable);
     }
 }

@@ -2,13 +2,13 @@ package com.example.aisearch.model.search;
 
 import java.util.List;
 
-public record SearchRequest(
+public record ProductSearchRequest(
         String query,
         SearchPrice searchPrice,
         List<Integer> categoryIds,
         SearchSortOption sortOption
 ) {
-    public SearchRequest {
+    public ProductSearchRequest {
         query = (query == null || query.isBlank()) ? null : query.trim();
 
         if (categoryIds != null) {
