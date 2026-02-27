@@ -8,7 +8,7 @@ import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
-import com.example.aisearch.service.search.VectorSearchService;
+import com.example.aisearch.service.search.ProductSearchService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -31,7 +31,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     private IndexRolloutService indexRolloutService;
 
     @Autowired
-    private VectorSearchService vectorSearchService;
+    private ProductSearchService productSearchService;
 
     @Test
     @Order(1)
@@ -68,7 +68,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         // 관련성이 낮은 키워드는 결과가 비어야 함
         String query = "태풍";
 
-        List<SearchHitResult> results = vectorSearchService.searchPage(new SearchRequest(query, null, null, null), pageRequest(1, 5)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(new SearchRequest(query, null, null, null), pageRequest(1, 5)).results();
 
         System.out.println("[SEARCH] query=" + query);
         results.forEach(hit -> System.out.printf(
@@ -96,7 +96,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
 
         int size = 5;
         for (String query : queries) {
-            List<SearchHitResult> results = vectorSearchService.searchPage(new SearchRequest(query, null, null, null), pageRequest(1, size)).results();
+            List<SearchHitResult> results = productSearchService.searchPage(new SearchRequest(query, null, null, null), pageRequest(1, size)).results();
             System.out.println("[COMPARE_QUERY] " + query);
             for (int i = 0; i < results.size(); i++) {
                 SearchHitResult hit = results.get(i);
@@ -113,7 +113,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     @Order(6)
     void categoryFilterShouldReturnOnlyRequestedCategories() {
         SearchRequest request = new SearchRequest(null, null, List.of(1, 2, 3), null);
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 10)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
 
         System.out.println("[CATEGORY_FILTER] categories=1,2,3");
         results.forEach(hit -> System.out.printf(
@@ -136,7 +136,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     void priceRangeFilterShouldReturnOnlyInRange() {
         SearchPrice price = new SearchPrice(5000, 15000);
         SearchRequest request = new SearchRequest(null, price, null, null);
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 10)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
 
         System.out.println("[PRICE_FILTER] min=5000, max=15000");
         results.forEach(hit -> System.out.printf(
@@ -163,7 +163,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 List.of(1),
                 SearchSortOption.RELEVANCE_DESC
         );
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 10)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
 
         System.out.println("[COMBINED_FILTER] query=건강한 간식, category=1, min=5000, max=30000");
         results.forEach(hit -> System.out.printf(
@@ -197,7 +197,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 SearchSortOption.PRICE_ASC
         );
 
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 10)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
         List<Integer> prices = extractPrices(results);
         Assertions.assertFalse(prices.isEmpty(), "가격 오름차순 검증을 위한 결과가 필요합니다.");
         assertNonDecreasing(prices);
@@ -213,7 +213,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 SearchSortOption.PRICE_DESC
         );
 
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 10)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
         List<Integer> prices = extractPrices(results);
         Assertions.assertFalse(prices.isEmpty(), "가격 내림차순 검증을 위한 결과가 필요합니다.");
         assertNonIncreasing(prices);
@@ -236,8 +236,8 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
         );
 
         Pageable pageable = pageRequest(1, 10);
-        List<SearchHitResult> defaultResults = vectorSearchService.searchPage(defaultSortRequest, pageable).results();
-        List<SearchHitResult> explicitResults = vectorSearchService.searchPage(explicitRelevanceRequest, pageable).results();
+        List<SearchHitResult> defaultResults = productSearchService.searchPage(defaultSortRequest, pageable).results();
+        List<SearchHitResult> explicitResults = productSearchService.searchPage(explicitRelevanceRequest, pageable).results();
 
         List<String> defaultIds = defaultResults.stream().map(SearchHitResult::id).collect(Collectors.toList());
         List<String> explicitIds = explicitResults.stream().map(SearchHitResult::id).collect(Collectors.toList());
@@ -260,8 +260,8 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
                 SearchSortOption.PRICE_ASC
         );
 
-        List<SearchHitResult> page1Results = vectorSearchService.searchPage(page1Request, pageRequest(1, 5)).results();
-        List<SearchHitResult> page2Results = vectorSearchService.searchPage(page2Request, pageRequest(2, 5)).results();
+        List<SearchHitResult> page1Results = productSearchService.searchPage(page1Request, pageRequest(1, 5)).results();
+        List<SearchHitResult> page2Results = productSearchService.searchPage(page2Request, pageRequest(2, 5)).results();
 
         Assertions.assertFalse(page1Results.isEmpty(), "1페이지 결과가 필요합니다.");
         Assertions.assertFalse(page2Results.isEmpty(), "2페이지 결과가 필요합니다.");
@@ -282,7 +282,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     @Order(13)
     void koreanParticleQueryShouldStillReturnRelevantCategory() {
         SearchRequest request = new SearchRequest("어린이가 먹을 간식을 추천해줘", null, null, SearchSortOption.RELEVANCE_DESC);
-        SearchPageResult pageResult = vectorSearchService.searchPage(request, pageRequest(1, 5));
+        SearchPageResult pageResult = productSearchService.searchPage(request, pageRequest(1, 5));
         List<SearchHitResult> results = pageResult.results();
 
         System.out.println("[MORPH] query=어린이가 먹을 간식을 추천해줘");
@@ -305,7 +305,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
     private void assertSemanticSearchContainsCategories(String query, int size, int page, String... expectedCategoryKeywords) {
         // 검색 결과 출력 및 기대 카테고리 포함 여부 검증
         SearchRequest request = new SearchRequest(query, null, null, null);
-        SearchPageResult pageResult = vectorSearchService.searchPage(request, pageRequest(page, size));
+        SearchPageResult pageResult = productSearchService.searchPage(request, pageRequest(page, size));
         List<SearchHitResult> results = pageResult.results();
 
         System.out.println("[SEARCH] query=" + query);
@@ -341,7 +341,7 @@ class VectorSearchIntegrationTest extends TruststoreTestBase {
 
     private void assertSemanticSearchReturnsResults(String query, int size, int page) {
         SearchRequest request = new SearchRequest(query, null, null, null);
-        SearchPageResult pageResult = vectorSearchService.searchPage(request, pageRequest(page, size));
+        SearchPageResult pageResult = productSearchService.searchPage(request, pageRequest(page, size));
         List<SearchHitResult> results = pageResult.results();
         System.out.println("[SEARCH_ONLY] query=" + query
                 + ", page=" + pageResult.page()

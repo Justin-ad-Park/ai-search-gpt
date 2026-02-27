@@ -1,7 +1,7 @@
 package com.example.aisearch.service.indexing.bootstrap.ingest;
 
 import com.example.aisearch.model.FoodProduct;
-import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.embedding.EmbeddingService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

@@ -2,7 +2,7 @@ package com.example.aisearch.service.indexing.domain;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.aisearch.config.AiSearchProperties;
-import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.embedding.EmbeddingService;
 import com.example.aisearch.service.indexing.bootstrap.schema.IndexSchemaBuilder;
 import com.example.aisearch.service.indexing.domain.exception.IndexCreationException;
 import com.example.aisearch.service.synonym.SynonymReloadService;

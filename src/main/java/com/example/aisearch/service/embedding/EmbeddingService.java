@@ -1,4 +1,4 @@
-package com.example.aisearch.service.embedding.model;
+package com.example.aisearch.service.embedding;
 
 import java.util.List;
 

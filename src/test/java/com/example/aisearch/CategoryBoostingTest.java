@@ -6,7 +6,7 @@ import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
-import com.example.aisearch.service.search.VectorSearchService;
+import com.example.aisearch.service.search.ProductSearchService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.MethodOrderer;
@@ -28,7 +28,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
     private IndexRolloutService indexRolloutService;
 
     @Autowired
-    private VectorSearchService vectorSearchService;
+    private ProductSearchService productSearchService;
 
     @Autowired
     private CategoryBoostBetaTuner categoryBoostBetaTuner;
@@ -49,7 +49,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
     @Order(2)
     void categoryBoostingSortShouldBoostFruitCategoryForAppleKeyword() {
         SearchRequest request = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
-        List<SearchHitResult> results = vectorSearchService.searchPage(request, pageRequest(1, 5)).results();
+        List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 5)).results();
 
         Assertions.assertFalse(results.isEmpty(), "카테고리 부스팅 검증을 위한 결과가 필요합니다.");
         long fruitCount = countCategoryInTopN(results, 5, 4);
@@ -66,8 +66,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
         SearchRequest categoryBoostSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         SearchRequest relevanceSortRequest = new SearchRequest("사과잼", null, null, SearchSortOption.RELEVANCE_DESC);
 
-        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
-        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+        List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
         Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
                 "키워드 불일치(사과잼) 시 CATEGORY_BOOSTING_DESC는 RELEVANCE_DESC와 동일 순서여야 합니다.");
@@ -80,8 +80,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
         SearchRequest categoryBoostSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.CATEGORY_BOOSTING_DESC);
         SearchRequest relevanceSortRequest = new SearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.RELEVANCE_DESC);
 
-        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
-        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+        List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
         Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
                 "q가 blank면 CATEGORY_BOOSTING_DESC 요청도 RELEVANCE_DESC와 동일 동작이어야 합니다.");
@@ -96,8 +96,8 @@ class CategoryBoostingTest extends TruststoreTestBase {
         SearchRequest categoryBoostSortRequest = new SearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         SearchRequest relevanceSortRequest = new SearchRequest("사과", null, null, SearchSortOption.RELEVANCE_DESC);
 
-        List<SearchHitResult> boostedResults = vectorSearchService.searchPage(categoryBoostSortRequest, pageable).results();
-        List<SearchHitResult> relevanceResults = vectorSearchService.searchPage(relevanceSortRequest, pageable).results();
+        List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
+        List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
         Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
                 "beta=0이면 카테고리 부스트 룰 영향은 0이어야 하며 CATEGORY_BOOSTING_DESC와 RELEVANCE_DESC 순서는 동일해야 합니다.");

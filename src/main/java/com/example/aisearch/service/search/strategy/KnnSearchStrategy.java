@@ -6,7 +6,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchRequest;
-import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.embedding.EmbeddingService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostingDecider;
 import com.example.aisearch.service.search.query.HybridBaseQueryBuilder;
 import com.example.aisearch.service.search.query.SearchFilterQueryBuilder;
@@ -58,7 +58,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         try {
             // 검색어가 있으면 임베딩 + script_score 기반 하이브리드 검색을 수행한다.
             if (searchRequest.hasQuery()) {
-                return vectorScoreSearch(searchRequest, pageable);
+                return hybridSearch(searchRequest, pageable);
             }
             // 검색어가 없으면 필터/정렬만 적용한 일반 검색을 수행한다.
             return filterOnlySearch(searchRequest, pageable);
@@ -67,7 +67,7 @@ public class KnnSearchStrategy implements SearchStrategy {
         }
     }
 
-    private SearchPageResult vectorScoreSearch(SearchRequest request, Pageable pageable) throws IOException {
+    private SearchPageResult hybridSearch(SearchRequest request, Pageable pageable) throws IOException {
 
         // 사용자 질의를 임베딩 벡터로 변환해 cosineSimilarity 계산에 사용한다.
         Query baseQuery = hybridBaseQueryBuilder.build(request, filterQueryBuilder.buildFilterQuery(request));

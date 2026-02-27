@@ -8,7 +8,7 @@ import com.example.aisearch.model.search.SearchPagingPolicy;
 import com.example.aisearch.model.search.SearchPrice;
 import com.example.aisearch.model.search.SearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
-import com.example.aisearch.service.search.VectorSearchService;
+import com.example.aisearch.service.search.ProductSearchService;
 import com.example.aisearch.service.synonym.SynonymReloadRequest;
 import com.example.aisearch.service.synonym.SynonymReloadResult;
 import com.example.aisearch.service.synonym.SynonymReloadService;
@@ -29,14 +29,14 @@ import java.util.List;
 @RestController
 public class SearchController {
 
-    private final VectorSearchService vectorSearchService;
+    private final ProductSearchService productSearchService;
     private final SynonymReloadService synonymReloadService;
 
     public SearchController(
-            VectorSearchService vectorSearchService,
+            ProductSearchService productSearchService,
             SynonymReloadService synonymReloadService
     ) {
-        this.vectorSearchService = vectorSearchService;
+        this.productSearchService = productSearchService;
         this.synonymReloadService = synonymReloadService;
     }
 
@@ -62,7 +62,7 @@ public class SearchController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
 
-        SearchPageResult pageResult = vectorSearchService.searchPage(request, pageable);
+        SearchPageResult pageResult = productSearchService.searchPage(request, pageable);
         List<Integer> normalizedCategoryIds = categoryIds == null ? List.of() : categoryIds;
         return new SearchResponseDto(
                 query,

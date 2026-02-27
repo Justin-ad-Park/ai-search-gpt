@@ -1,6 +1,6 @@
 # KnnSearchStrategy 핵심 검색 코드 이해 가이드
 
-이 문서는 `KnnSearchStrategy#vectorScoreSearch(...)`의 `client.search(...)` 블록을 빠르게 이해하기 위한 설명입니다.
+이 문서는 `KnnSearchStrategy#hybridSearch(...)`의 `client.search(...)` 블록을 빠르게 이해하기 위한 설명입니다.
 
 ## 1) 현재 대상 코드
 
@@ -139,7 +139,7 @@
 
 ### A. 검색어 `"사과"` + `CATEGORY_BOOSTING_DESC` (룰 매칭됨)
 
-- 경로: `vectorScoreSearch`
+- 경로: `hybridSearch`
 - `CategoryBoostingDecider` 결과:
 1. `applyCategoryBoost = true`
 2. `searchSortOption = CATEGORY_BOOSTING_DESC`

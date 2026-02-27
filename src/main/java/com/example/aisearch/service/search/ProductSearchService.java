@@ -7,11 +7,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
-public class VectorSearchService {
+public class ProductSearchService {
 
     private final SearchStrategy searchStrategy;
 
-    public VectorSearchService(
+    public ProductSearchService(
             SearchStrategy searchStrategy
     ) {
         this.searchStrategy = searchStrategy;

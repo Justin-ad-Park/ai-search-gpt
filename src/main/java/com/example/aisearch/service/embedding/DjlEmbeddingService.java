@@ -10,7 +10,7 @@ import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import com.example.aisearch.service.embedding.model.EmbeddingModelSource;
 import com.example.aisearch.service.embedding.model.EmbeddingModelSourceLoader;
-import com.example.aisearch.service.embedding.model.EmbeddingService;
+import com.example.aisearch.service.embedding.EmbeddingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
