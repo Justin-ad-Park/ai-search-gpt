@@ -62,6 +62,19 @@
 ./sh_bin/04_run_vector_search_test_local.sh
 ```
 
+### 5) 모델별 앱 실행
+```bash
+./sh_bin/21_run_model_web.sh e5-small-ko-v2
+./sh_bin/22_run_model_indexing_web.sh minilm-l12
+./sh_bin/23_run_model_indexing_only.sh minilm-l6
+```
+
+지원 모델 키:
+- `e5-small-ko-v2`
+- `e5-small-ko`
+- `minilm-l12`
+- `minilm-l6`
+
 ## 운영 상태 빠른 확인
 ```bash
 ./sh_bin/90_check_k8s_elastic_pods.sh

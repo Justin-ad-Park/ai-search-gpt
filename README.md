@@ -26,3 +26,25 @@
 - 통합 검증(Elasticsearch 필요): `./gradlew integrationTest`
 
 통합 테스트는 로컬 Elasticsearch, truststore, 샘플 색인 환경이 준비된 상태를 전제로 합니다.
+
+## 모델별 실행 프로필
+- `model-e5-small-ko-v2`: `./gradlew bootRun --args='--spring.profiles.active=model-e5-small-ko-v2'`
+- `model-e5-small-ko`: `./gradlew bootRun --args='--spring.profiles.active=model-e5-small-ko'`
+- `model-minilm-l12`: `./gradlew bootRun --args='--spring.profiles.active=model-minilm-l12'`
+- `model-minilm-l6`: `./gradlew bootRun --args='--spring.profiles.active=model-minilm-l6'`
+
+기본 포트/인덱스/alias는 프로필마다 분리되어 있습니다.
+- `model-e5-small-ko-v2`: `8081`, `food-products-e5-small-ko-v2`
+- `model-e5-small-ko`: `8082`, `food-products-e5-small-ko`
+- `model-minilm-l12`: `8083`, `food-products-minilm-l12`
+- `model-minilm-l6`: `8084`, `food-products-minilm-l6`
+
+색인까지 같이 하려면 프로필을 조합해서 실행합니다.
+- 예: `./gradlew bootRun --args='--spring.profiles.active=model-minilm-l12,indexing-web'`
+
+모델을 바꾸면 임베딩 차원이 달라질 수 있으므로 각 프로필은 별도 인덱스/alias를 사용해야 하며, 최초 1회 재색인이 필요합니다.
+
+모델 실행 스크립트도 사용할 수 있습니다.
+- 웹 실행: `./sh_bin/21_run_model_web.sh e5-small-ko-v2`
+- 색인 + 웹 실행: `./sh_bin/22_run_model_indexing_web.sh minilm-l12`
+- 색인만 실행: `./sh_bin/23_run_model_indexing_only.sh minilm-l6`
