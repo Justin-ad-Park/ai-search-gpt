@@ -7,22 +7,28 @@ import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
 import com.example.aisearch.service.search.ProductSearchService;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Map;
-
-@SpringBootTest
+@SpringBootTest(properties = {
+        "ai-search.index-name=categoryboost-it-products",
+        "ai-search.read-alias=categoryboost-it-products-read",
+        "ai-search.synonyms-set=categoryboost-it-synonyms"
+})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class CategoryBoostingTest extends TruststoreTestBase {
+class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
 
     @Autowired
     private IndexRolloutService indexRolloutService;
@@ -33,9 +39,20 @@ class CategoryBoostingTest extends TruststoreTestBase {
     @Autowired
     private CategoryBoostBetaTuner categoryBoostBetaTuner;
 
+    @BeforeAll
+    void setUp() throws Exception {
+        printIsolationConfig("CategoryBoostingTest");
+        deleteAllVersionedIndices();
+    }
+
     @AfterEach
     void resetBeta() {
         categoryBoostBetaTuner.reset();
+    }
+
+    @AfterAll
+    void tearDown() throws Exception {
+        deleteAllVersionedIndices();
     }
 
     @Test
@@ -69,7 +86,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
-        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+        Assertions.assertEquals(SearchResultTestSupport.extractIds(relevanceResults), SearchResultTestSupport.extractIds(boostedResults),
                 "키워드 불일치(사과잼) 시 CATEGORY_BOOSTING_DESC는 RELEVANCE_DESC와 동일 순서여야 합니다.");
     }
 
@@ -83,7 +100,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
-        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+        Assertions.assertEquals(SearchResultTestSupport.extractIds(relevanceResults), SearchResultTestSupport.extractIds(boostedResults),
                 "q가 blank면 CATEGORY_BOOSTING_DESC 요청도 RELEVANCE_DESC와 동일 동작이어야 합니다.");
     }
 
@@ -99,26 +116,14 @@ class CategoryBoostingTest extends TruststoreTestBase {
         List<SearchHitResult> boostedResults = productSearchService.searchPage(categoryBoostSortRequest, pageable).results();
         List<SearchHitResult> relevanceResults = productSearchService.searchPage(relevanceSortRequest, pageable).results();
 
-        Assertions.assertEquals(extractIds(relevanceResults), extractIds(boostedResults),
+        Assertions.assertEquals(SearchResultTestSupport.extractIds(relevanceResults), SearchResultTestSupport.extractIds(boostedResults),
                 "beta=0이면 카테고리 부스트 룰 영향은 0이어야 하며 CATEGORY_BOOSTING_DESC와 RELEVANCE_DESC 순서는 동일해야 합니다.");
-    }
-
-    private Integer asInteger(Map<String, Object> source, String key) {
-        Object value = source.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        return null;
-    }
-
-    private List<String> extractIds(List<SearchHitResult> results) {
-        return results.stream().map(SearchHitResult::id).toList();
     }
 
     private long countCategoryInTopN(List<SearchHitResult> results, int topN, int expectedCategoryId) {
         return results.stream()
                 .limit(topN)
-                .map(hit -> asInteger(hit.source(), "categoryId"))
+                .map(hit -> SearchResultTestSupport.asInteger(hit.source(), "categoryId"))
                 .filter(categoryId -> categoryId != null && categoryId == expectedCategoryId)
                 .count();
     }

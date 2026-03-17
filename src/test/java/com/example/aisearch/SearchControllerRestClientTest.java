@@ -1,6 +1,8 @@
 package com.example.aisearch;
 
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -8,16 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "ai-search.index-name=search-rest-it-products",
+                "ai-search.read-alias=search-rest-it-products-read",
+                "ai-search.synonyms-set=search-rest-it-synonyms"
+        }
+)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SearchControllerRestClientTest extends TruststoreTestBase {
+class SearchControllerRestClientTest extends RestApiIntegrationTestBase {
 
     @LocalServerPort
     private int port;
@@ -26,20 +30,30 @@ class SearchControllerRestClientTest extends TruststoreTestBase {
     private IndexRolloutService indexRolloutService;
 
     @BeforeAll
-    void setUp() {
+    void setUp() throws Exception {
+        printIsolationConfig("SearchControllerRestClientTest");
+        deleteAllVersionedIndices();
         indexRolloutService.rollOutFromSourceData();
+    }
+
+    @AfterAll
+    void tearDown() throws Exception {
+        deleteAllVersionedIndices();
     }
 
     @Test
     void searchShouldReturnResults() throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-        URI uri = URI.create("http://localhost:" + port + "/api/search?q=어린이%20간식");
-        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
+        JsonNode response = getJsonAndAssertOk("/api/search?q=어린이%20간식");
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("[REST_CLIENT] status=" + response.statusCode());
-        System.out.println("[REST_CLIENT] body=" + response.body());
+        System.out.println("[REST_CLIENT] totalElements=" + response.path("totalElements").asLong());
+        System.out.println("[REST_CLIENT] count=" + response.path("count").asInt());
 
-        assertEquals(200, response.statusCode());
+        assertTrue(response.path("results").isArray());
+        assertTrue(response.path("count").asInt() > 0, "검색 결과가 1건 이상이어야 합니다.");
+    }
+
+    @Override
+    protected int port() {
+        return port;
     }
 }

@@ -9,10 +9,13 @@ import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.search.ProductSearchService;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,18 +23,33 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "ai-search.index-name=search-it-products",
+        "ai-search.read-alias=search-it-products-read",
+        "ai-search.synonyms-set=search-it-synonyms"
+})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SearchIntegrationTest extends TruststoreTestBase {
+class SearchIntegrationTest extends ElasticsearchIntegrationTestBase {
 
     @Autowired
     private IndexRolloutService indexRolloutService;
 
     @Autowired
     private ProductSearchService productSearchService;
+
+    @BeforeAll
+    void setUp() throws Exception {
+        printIsolationConfig("SearchIntegrationTest");
+        deleteAllVersionedIndices();
+    }
+
+    @AfterAll
+    void tearDown() throws Exception {
+        deleteAllVersionedIndices();
+    }
 
     @Test
     @Order(1)
@@ -126,7 +144,7 @@ class SearchIntegrationTest extends TruststoreTestBase {
 
         Assertions.assertFalse(results.isEmpty(), "카테고리 필터 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer categoryId = asInteger(hit.source(), "categoryId");
+            Integer categoryId = SearchResultTestSupport.asInteger(hit.source(), "categoryId");
             return categoryId != null && List.of(1, 2, 3).contains(categoryId);
         }), "모든 결과의 categoryId는 1,2,3 중 하나여야 합니다.");
     }
@@ -149,7 +167,7 @@ class SearchIntegrationTest extends TruststoreTestBase {
 
         Assertions.assertFalse(results.isEmpty(), "가격 범위 필터 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer priceValue = asInteger(hit.source(), "price");
+            Integer priceValue = SearchResultTestSupport.asInteger(hit.source(), "price");
             return priceValue != null && priceValue >= 5000 && priceValue <= 15000;
         }), "모든 결과의 price는 5000~15000 범위여야 합니다.");
     }
@@ -177,8 +195,8 @@ class SearchIntegrationTest extends TruststoreTestBase {
 
         Assertions.assertFalse(results.isEmpty(), "복합 조건 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer categoryId = asInteger(hit.source(), "categoryId");
-            Integer priceValue = asInteger(hit.source(), "price");
+            Integer categoryId = SearchResultTestSupport.asInteger(hit.source(), "categoryId");
+            Integer priceValue = SearchResultTestSupport.asInteger(hit.source(), "price");
             return categoryId != null
                     && categoryId == 1
                     && priceValue != null
@@ -198,7 +216,7 @@ class SearchIntegrationTest extends TruststoreTestBase {
         );
 
         List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
-        List<Integer> prices = extractPrices(results);
+        List<Integer> prices = SearchResultTestSupport.extractIntegers(results, "price");
         Assertions.assertFalse(prices.isEmpty(), "가격 오름차순 검증을 위한 결과가 필요합니다.");
         assertNonDecreasing(prices);
     }
@@ -214,7 +232,7 @@ class SearchIntegrationTest extends TruststoreTestBase {
         );
 
         List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 10)).results();
-        List<Integer> prices = extractPrices(results);
+        List<Integer> prices = SearchResultTestSupport.extractIntegers(results, "price");
         Assertions.assertFalse(prices.isEmpty(), "가격 내림차순 검증을 위한 결과가 필요합니다.");
         assertNonIncreasing(prices);
     }
@@ -270,8 +288,8 @@ class SearchIntegrationTest extends TruststoreTestBase {
         List<String> page2Ids = page2Results.stream().map(SearchHitResult::id).toList();
         Assertions.assertTrue(page1Ids.stream().noneMatch(page2Ids::contains), "페이지 간 결과 ID는 중복되면 안 됩니다.");
 
-        List<Integer> page1Prices = extractPrices(page1Results);
-        List<Integer> page2Prices = extractPrices(page2Results);
+        List<Integer> page1Prices = SearchResultTestSupport.extractIntegers(page1Results, "price");
+        List<Integer> page2Prices = SearchResultTestSupport.extractIntegers(page2Results, "price");
         assertNonDecreasing(page1Prices);
         assertNonDecreasing(page2Prices);
         Assertions.assertTrue(page1Prices.get(page1Prices.size() - 1) <= page2Prices.get(0),
@@ -362,21 +380,6 @@ class SearchIntegrationTest extends TruststoreTestBase {
             }
         }
         return false;
-    }
-
-    private Integer asInteger(Map<String, Object> source, String key) {
-        Object value = source.get(key);
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        return null;
-    }
-
-    private List<Integer> extractPrices(List<SearchHitResult> results) {
-        return results.stream()
-                .map(hit -> asInteger(hit.source(), "price"))
-                .filter(value -> value != null)
-                .toList();
     }
 
     private void assertNonDecreasing(List<Integer> numbers) {

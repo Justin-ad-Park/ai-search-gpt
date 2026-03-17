@@ -1,25 +1,20 @@
 package com.example.aisearch;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -34,36 +29,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 "ai-search.index-retention-count=3"
         }
 )
-class IndexRestoreIntegrationTest extends TruststoreTestBase {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class IndexRestoreIntegrationTest extends RestApiIntegrationTestBase {
 
     @LocalServerPort
     private int port;
 
     @Autowired
-    private AiSearchProperties properties;
-
-    @Autowired
-    private ElasticsearchClient esClient;
-
-    @Autowired
     private IndexRolloutService indexRolloutService;
 
-    private final HttpClient client = HttpClient.newHttpClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @BeforeAll
+    void setUp() throws Exception {
+        printIsolationConfig("IndexRestoreIntegrationTest");
+        deleteAllVersionedIndices();
+    }
 
     @AfterEach
-    void tearDown() throws IOException {
-        String pattern = properties.indexName() + "-v*";
-        boolean exists = esClient.indices().exists(e -> e.index(pattern)).value();
-        if (!exists) {
-            return;
-        }
-        Map<String, ?> indices = esClient.indices()
-                .get(g -> g.index(pattern).ignoreUnavailable(true).allowNoIndices(true))
-                .result();
-        for (String index : indices.keySet()) {
-            esClient.indices().delete(d -> d.index(index));
-        }
+    void tearDown() throws Exception {
+        deleteAllVersionedIndices();
     }
 
     @Test
@@ -176,64 +159,40 @@ class IndexRestoreIntegrationTest extends TruststoreTestBase {
     }
 
     private JsonNode listRestoreCandidates() throws Exception {
-        URI uri = URI.create("http://localhost:" + port + "/api/admin/index-restore/candidates");
-        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        assertEquals(200, response.statusCode());
-        return objectMapper.readTree(response.body());
+        return getJsonAndAssertOk("/api/admin/index-restore/candidates");
     }
 
     private JsonNode restore(String targetIndex) throws Exception {
-        HttpResponse<String> response = restoreRaw(targetIndex);
-        assertEquals(200, response.statusCode());
-        return objectMapper.readTree(response.body());
-    }
-
-    private HttpResponse<String> restoreRaw(String targetIndex) throws Exception {
-        URI uri = URI.create("http://localhost:" + port + "/api/admin/index-restore");
         String body = """
                 {
                   "targetIndex": "%s"
                 }
                 """.formatted(targetIndex);
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-        return client.send(request, HttpResponse.BodyHandlers.ofString());
+        return postJsonAndAssertOk("/api/admin/index-restore", body);
+    }
+
+    private HttpResponse<String> restoreRaw(String targetIndex) throws Exception {
+        String body = """
+                {
+                  "targetIndex": "%s"
+                }
+                """.formatted(targetIndex);
+        return postJson("/api/admin/index-restore", body);
     }
 
     private JsonNode search(String query) throws Exception {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        URI uri = URI.create("http://localhost:" + port + "/api/search?q=" + encodedQuery + "&page=1&size=20&sort=RELEVANCE_DESC");
-        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        assertEquals(200, response.statusCode());
-        return objectMapper.readTree(response.body());
+        return getJsonAndAssertOk("/api/search?q=" + encodedQuery + "&page=1&size=20&sort=RELEVANCE_DESC");
     }
 
     private void assertContainsProductName(JsonNode results, String expectedNameKeyword) {
-        boolean found = false;
-        for (JsonNode hit : results) {
-            String name = hit.path("source").path("product_name").asText("");
-            if (name.contains(expectedNameKeyword)) {
-                found = true;
-                break;
-            }
-        }
-        assertTrue(found, "검색 결과에 '" + expectedNameKeyword + "' 상품이 포함되어야 합니다.");
+        assertTrue(SearchResultTestSupport.containsProductName(results, expectedNameKeyword),
+                "검색 결과에 '" + expectedNameKeyword + "' 상품이 포함되어야 합니다.");
     }
 
     private void assertNotContainsProductName(JsonNode results, String unexpectedKeyword) {
-        boolean found = false;
-        for (JsonNode hit : results) {
-            String name = hit.path("source").path("product_name").asText("");
-            if (name.contains(unexpectedKeyword)) {
-                found = true;
-                break;
-            }
-        }
-        assertFalse(found, "검색 결과에 '" + unexpectedKeyword + "' 상품이 포함되면 안 됩니다.");
+        assertFalse(SearchResultTestSupport.containsProductName(results, unexpectedKeyword),
+                "검색 결과에 '" + unexpectedKeyword + "' 상품이 포함되면 안 됩니다.");
     }
 
     private void printSearchResults(String stage, String query, JsonNode searchJson) {
@@ -252,5 +211,10 @@ class IndexRestoreIntegrationTest extends TruststoreTestBase {
                     + ", name=" + source.path("product_name").asText()
                     + ", category=" + source.path("category").asText());
         }
+    }
+
+    @Override
+    protected int port() {
+        return port;
     }
 }

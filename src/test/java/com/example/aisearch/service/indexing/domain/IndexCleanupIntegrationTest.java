@@ -1,8 +1,6 @@
 package com.example.aisearch.service.indexing.domain;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.example.aisearch.TruststoreTestBase;
-import com.example.aisearch.config.AiSearchProperties;
+import com.example.aisearch.ElasticsearchIntegrationTestBase;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,13 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         "ai-search.synonyms-set=retention-it-synonyms",
         "ai-search.index-retention-count=3"
 })
-class IndexCleanupIntegrationTest extends TruststoreTestBase {
-
-    @Autowired
-    private ElasticsearchClient esClient;
-
-    @Autowired
-    private AiSearchProperties properties;
+class IndexCleanupIntegrationTest extends ElasticsearchIntegrationTestBase {
 
     @Autowired
     private AliasSwitcher aliasSwitcher;
@@ -42,6 +32,7 @@ class IndexCleanupIntegrationTest extends TruststoreTestBase {
 
     @BeforeEach
     void setUp() throws IOException {
+        printIsolationConfig("IndexCleanupIntegrationTest");
         deleteAllVersionedIndices();
     }
 
@@ -86,42 +77,5 @@ class IndexCleanupIntegrationTest extends TruststoreTestBase {
         assertTrue(remainingIndices.contains(fourth.newIndex()));
         assertFalse(remainingIndices.contains(first.newIndex()));
         assertFalse(indexExists(first.newIndex()));
-    }
-
-    private List<String> findVersionedIndices() throws IOException {
-        String pattern = properties.indexName() + "-v*";
-        boolean exists = esClient.indices().exists(e -> e.index(pattern)).value();
-        if (!exists) {
-            return List.of();
-        }
-
-        Map<String, ?> indexMap = esClient.indices()
-                .get(g -> g.index(pattern).ignoreUnavailable(true).allowNoIndices(true))
-                .result();
-
-        return indexMap.keySet().stream()
-                .filter(index -> index.startsWith(properties.indexName() + "-v"))
-                .sorted(Comparator.reverseOrder())
-                .toList();
-    }
-
-    private boolean indexExists(String indexName) throws IOException {
-        return esClient.indices().exists(e -> e.index(indexName)).value();
-    }
-
-    private void deleteAllVersionedIndices() throws IOException {
-        String pattern = properties.indexName() + "-v*";
-        boolean exists = esClient.indices().exists(e -> e.index(pattern)).value();
-        if (!exists) {
-            return;
-        }
-
-        Map<String, ?> indices = esClient.indices()
-                .get(g -> g.index(pattern).ignoreUnavailable(true).allowNoIndices(true))
-                .result();
-
-        for (String index : indices.keySet()) {
-            esClient.indices().delete(d -> d.index(index));
-        }
     }
 }
