@@ -1,44 +1,46 @@
 package com.example.aisearch.service.indexing.orchestration;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.service.indexing.domain.AliasSwitcher;
+import com.example.aisearch.service.indexing.domain.VersionedIndexLocator;
 import com.example.aisearch.service.indexing.orchestration.exception.InvalidRestoreTargetException;
 import com.example.aisearch.service.indexing.orchestration.exception.RestoreTargetNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 @Service
 public class IndexRestoreService {
 
-    private final ElasticsearchClient esClient;
     private final AiSearchProperties properties;
     private final AliasSwitcher aliasSwitcher;
+    private final VersionedIndexLocator versionedIndexLocator;
 
     public IndexRestoreService(
-            ElasticsearchClient esClient,
             AiSearchProperties properties,
-            AliasSwitcher aliasSwitcher
+            AliasSwitcher aliasSwitcher,
+            VersionedIndexLocator versionedIndexLocator
     ) {
-        this.esClient = esClient;
         this.properties = properties;
         this.aliasSwitcher = aliasSwitcher;
+        this.versionedIndexLocator = versionedIndexLocator;
     }
 
     public RestoreIndexCandidatesResult listCandidates() {
         String currentAliasIndex = aliasSwitcher.findCurrentAliasedIndex();
-        List<RestoreIndexCandidate> candidates = findVersionedIndices().stream()
-                .map(index -> new RestoreIndexCandidate(
-                        index,
-                        index.equals(currentAliasIndex),
-                        !index.equals(currentAliasIndex)
-                ))
-                .toList();
+        List<RestoreIndexCandidate> candidates;
+        try {
+            candidates = versionedIndexLocator.findVersionedIndices().stream()
+                    .map(index -> new RestoreIndexCandidate(
+                            index,
+                            index.equals(currentAliasIndex),
+                            !index.equals(currentAliasIndex)
+                    ))
+                    .toList();
+        } catch (IOException e) {
+            throw new IllegalStateException("복구 후보 인덱스 조회 실패", e);
+        }
 
         return new RestoreIndexCandidatesResult(
                 properties.readAlias(),
@@ -56,8 +58,12 @@ public class IndexRestoreService {
         if (targetIndex.equals(currentAliasIndex)) {
             throw new InvalidRestoreTargetException("targetIndex가 현재 alias 대상 인덱스와 동일합니다.");
         }
-        if (!indexExists(targetIndex)) {
-            throw new RestoreTargetNotFoundException("targetIndex가 존재하지 않습니다. targetIndex=" + targetIndex);
+        try {
+            if (!versionedIndexLocator.indexExists(targetIndex)) {
+                throw new RestoreTargetNotFoundException("targetIndex가 존재하지 않습니다. targetIndex=" + targetIndex);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("인덱스 존재 여부 조회 실패. index=" + targetIndex, e);
         }
 
         aliasSwitcher.swapReadAlias(currentAliasIndex, targetIndex);
@@ -70,46 +76,12 @@ public class IndexRestoreService {
         return new RestoreIndexResult(true, properties.readAlias(), currentAliasIndex, targetIndex);
     }
 
-    private List<String> findVersionedIndices() {
-        String pattern = properties.indexName() + "-v*";
-        try {
-            boolean exists = esClient.indices().exists(e -> e.index(pattern)).value();
-            if (!exists) {
-                return List.of();
-            }
-
-            Map<String, ?> indexMap = esClient.indices()
-                    .get(g -> g.index(pattern).ignoreUnavailable(true).allowNoIndices(true))
-                    .result();
-
-            return indexMap.keySet().stream()
-                    .filter(this::isVersionedIndex)
-                    .sorted(Comparator.reverseOrder())
-                    .toList();
-        } catch (IOException e) {
-            throw new IllegalStateException("복구 후보 인덱스 조회 실패", e);
-        }
-    }
-
-    private boolean indexExists(String indexName) {
-        try {
-            return esClient.indices().exists(e -> e.index(indexName)).value();
-        } catch (IOException e) {
-            throw new IllegalStateException("인덱스 존재 여부 조회 실패. index=" + indexName, e);
-        }
-    }
-
     private void validateTargetIndex(String targetIndex) {
         if (targetIndex == null || targetIndex.isBlank()) {
             throw new InvalidRestoreTargetException("targetIndex는 비어 있을 수 없습니다.");
         }
-        if (!isVersionedIndex(targetIndex)) {
+        if (!versionedIndexLocator.matchesVersionedIndexName(targetIndex)) {
             throw new InvalidRestoreTargetException("targetIndex 형식이 올바르지 않습니다. targetIndex=" + targetIndex);
         }
-    }
-
-    private boolean isVersionedIndex(String indexName) {
-        Pattern pattern = Pattern.compile("^" + Pattern.quote(properties.indexName()) + "-v\\d{14}$");
-        return pattern.matcher(indexName).matches();
     }
 }

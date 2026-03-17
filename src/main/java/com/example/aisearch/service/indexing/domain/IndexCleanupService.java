@@ -12,9 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * 롤아웃 후 불필요해진 버전 인덱스를 정리하는 도메인 서비스.
@@ -26,10 +24,16 @@ public class IndexCleanupService {
 
     private final ElasticsearchClient esClient;
     private final AiSearchProperties properties;
+    private final VersionedIndexLocator versionedIndexLocator;
 
-    public IndexCleanupService(ElasticsearchClient esClient, AiSearchProperties properties) {
+    public IndexCleanupService(
+            ElasticsearchClient esClient,
+            AiSearchProperties properties,
+            VersionedIndexLocator versionedIndexLocator
+    ) {
         this.esClient = esClient;
         this.properties = properties;
+        this.versionedIndexLocator = versionedIndexLocator;
     }
 
     /**
@@ -42,7 +46,7 @@ public class IndexCleanupService {
         validateRetentionCount();
 
         try {
-            List<String> versionedIndices = findVersionedIndices();
+            List<String> versionedIndices = versionedIndexLocator.findVersionedIndices();
             List<String> deleteTargets = planDeleteTargets(versionedIndices, currentAliasedIndex);
 
             log.info("Index cleanup candidates. currentIndex={}, retentionCount={}, currentIndexCount={}, deleteTargets={}",
@@ -72,7 +76,7 @@ public class IndexCleanupService {
         validateRetentionCount();
 
         List<String> sortedVersioned = versionedIndices.stream()
-                .filter(this::isVersionedIndex)
+                .filter(versionedIndexLocator::matchesVersionedIndexName)
                 .distinct()
                 .sorted(Comparator.reverseOrder())
                 .toList();
@@ -82,7 +86,9 @@ public class IndexCleanupService {
         }
 
         Set<String> keep = new LinkedHashSet<>();
-        if (currentAliasedIndex != null && isVersionedIndex(currentAliasedIndex) && sortedVersioned.contains(currentAliasedIndex)) {
+        if (currentAliasedIndex != null
+                && versionedIndexLocator.matchesVersionedIndexName(currentAliasedIndex)
+                && sortedVersioned.contains(currentAliasedIndex)) {
             keep.add(currentAliasedIndex);
         }
 
@@ -96,30 +102,6 @@ public class IndexCleanupService {
         return sortedVersioned.stream()
                 .filter(index -> !keep.contains(index))
                 .toList();
-    }
-
-    private List<String> findVersionedIndices() throws IOException {
-        String indexPattern = properties.indexName() + "-v*";
-        boolean exists = esClient.indices().exists(e -> e.index(indexPattern)).value();
-        if (!exists) {
-            return List.of();
-        }
-
-        Map<String, ?> indexMap = esClient.indices()
-                .get(g -> g.index(indexPattern).ignoreUnavailable(true).allowNoIndices(true))
-                .result();
-
-        return indexMap.keySet().stream()
-                .filter(this::isVersionedIndex)
-                .toList();
-    }
-
-    private boolean isVersionedIndex(String indexName) {
-        if (indexName == null || indexName.isBlank()) {
-            return false;
-        }
-        Pattern pattern = Pattern.compile("^" + Pattern.quote(properties.indexName()) + "-v\\d{14}$");
-        return pattern.matcher(indexName).matches();
     }
 
     private void validateRetentionCount() {
