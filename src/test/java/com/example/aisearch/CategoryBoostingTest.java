@@ -3,7 +3,6 @@ package com.example.aisearch;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
-import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
 import com.example.aisearch.service.search.ProductSearchService;
@@ -11,11 +10,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +23,6 @@ import java.util.List;
         "ai-search.synonyms-set=categoryboost-it-synonyms"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
 
     @Autowired
@@ -43,27 +38,11 @@ class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
     void setUp() throws Exception {
         printIsolationConfig("CategoryBoostingTest");
         deleteAllVersionedIndices();
-    }
-
-    @AfterEach
-    void resetBeta() {
-        categoryBoostBetaTuner.reset();
-    }
-
-    @AfterAll
-    void tearDown() throws Exception {
-        deleteAllVersionedIndices();
-    }
-
-    @Test
-    @Order(1)
-    void reindexSampleDataForCategoryBoostingTests() {
-        IndexRolloutResult rollout = indexRolloutService.rollOutFromSourceData();
+        var rollout = indexRolloutService.rollOutFromSourceData();
         Assertions.assertTrue(rollout.indexedCount() >= 100, "최소 100건 이상 인덱싱되어야 합니다.");
     }
 
     @Test
-    @Order(2)
     void categoryBoostingSortShouldBoostFruitCategoryForAppleKeyword() {
         ProductSearchRequest request = new ProductSearchRequest("사과", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
         List<SearchHitResult> results = productSearchService.searchPage(request, pageRequest(1, 5)).results();
@@ -77,7 +56,6 @@ class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
     }
 
     @Test
-    @Order(3)
     void categoryBoostingSortShouldFallbackToRelevanceWhenAppleJamKeywordDoesNotMatch() {
         Pageable pageable = pageRequest(1, 10);
         ProductSearchRequest categoryBoostSortRequest = new ProductSearchRequest("사과잼", null, null, SearchSortOption.CATEGORY_BOOSTING_DESC);
@@ -91,7 +69,6 @@ class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
     }
 
     @Test
-    @Order(4)
     void categoryBoostingSortShouldFallbackToRelevanceWhenQueryIsBlank() {
         Pageable pageable = pageRequest(1, 10);
         ProductSearchRequest categoryBoostSortRequest = new ProductSearchRequest("   ", null, List.of(1, 2, 7), SearchSortOption.CATEGORY_BOOSTING_DESC);
@@ -105,7 +82,6 @@ class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
     }
 
     @Test
-    @Order(5)
     void categoryBoostingShouldHaveNoEffectWhenBetaIsZero() {
         categoryBoostBetaTuner.setBeta(0.0);
 
@@ -118,6 +94,16 @@ class CategoryBoostingTest extends ElasticsearchIntegrationTestBase {
 
         Assertions.assertEquals(SearchResultTestSupport.extractIds(relevanceResults), SearchResultTestSupport.extractIds(boostedResults),
                 "beta=0이면 카테고리 부스트 룰 영향은 0이어야 하며 CATEGORY_BOOSTING_DESC와 RELEVANCE_DESC 순서는 동일해야 합니다.");
+    }
+
+    @AfterEach
+    void resetBeta() {
+        categoryBoostBetaTuner.reset();
+    }
+
+    @AfterAll
+    void tearDown() throws Exception {
+        deleteAllVersionedIndices();
     }
 
     private long countCategoryInTopN(List<SearchHitResult> results, int topN, int expectedCategoryId) {

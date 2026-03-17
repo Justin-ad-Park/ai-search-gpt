@@ -3,7 +3,10 @@ package com.example.aisearch;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.synonym.SynonymReloadMode;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -24,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         }
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SynonymsRestClientIntegrationTest extends RestApiIntegrationTestBase {
 
     @LocalServerPort
@@ -51,14 +53,12 @@ class SynonymsRestClientIntegrationTest extends RestApiIntegrationTestBase {
     }
 
     @Test
-    @Order(1)
     void 회귀동의어_적용후_딤섬_검색시_만두가_포함된다() throws Exception {
         reloadSynonymsAndAssert(SynonymReloadMode.REGRESSION);
         assertSynonymSearchContainsProduct("딤섬", "만두");
     }
 
     @Test
-    @Order(2)
     void 동의어_적용후_교자_검색시_만두가_포함된다() throws Exception {
         reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
         assertSynonymSearchContainsProduct("교자", "만두");
@@ -66,7 +66,6 @@ class SynonymsRestClientIntegrationTest extends RestApiIntegrationTestBase {
 
 
     @Test
-    @Order(3)
     void 동의어_적용후_얄피_검색시_생만두가_포함된다() throws Exception {
         reloadSynonymsAndAssert(SynonymReloadMode.PRODUCTION);
         assertSynonymSearchContainsProduct("얄피", "만두");
