@@ -5,9 +5,8 @@ NAMESPACE="${NAMESPACE:-ai-search}"
 
 MODELS=(
   "e5-small-ko-v2:8091:food-products-e5-small-ko-v2-read"
-  "e5-small-ko:8092:food-products-e5-small-ko-read"
-  "minilm-l12:8093:food-products-minilm-l12-read"
-  "minilm-l6:8094:food-products-minilm-l6-read"
+  "kure-v1:8093:food-products-kure-v1-read"
+  "bge-m3:8095:food-products-bge-m3-read"
 )
 
 require_command() {
@@ -45,4 +44,3 @@ for entry in "${MODELS[@]}"; do
     echo "[ALIAS] ${alias_name} NOT FOUND"
   fi
 done
-

@@ -20,6 +20,24 @@ public class ElasticsearchSynonymEsGateway implements SynonymEsGateway {
     }
 
     @Override
+    public boolean existsSynonyms(String synonymsSetId) {
+        try {
+            client.synonyms().getSynonym(request -> request.id(synonymsSetId));
+            return true;
+        } catch (TransportException e) {
+            if (isNotFound(e)) {
+                return false;
+            }
+            throw new IllegalStateException("동의어 세트 조회 실패: " + synonymsSetId, e);
+        } catch (IOException | ElasticsearchException e) {
+            if (isNotFound(e)) {
+                return false;
+            }
+            throw new IllegalStateException("동의어 세트 조회 실패: " + synonymsSetId, e);
+        }
+    }
+
+    @Override
     public void putSynonyms(String synonymsSetId, List<String> rules) {
         try {
             client.synonyms().putSynonym(request -> request
@@ -76,5 +94,10 @@ public class ElasticsearchSynonymEsGateway implements SynonymEsGateway {
             current = current.getCause();
         }
         return false;
+    }
+
+    private boolean isNotFound(Exception e) {
+        String message = e.getMessage();
+        return message != null && message.contains("status: 404");
     }
 }

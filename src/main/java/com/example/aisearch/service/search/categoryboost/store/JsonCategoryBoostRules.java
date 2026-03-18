@@ -4,6 +4,7 @@ import com.example.aisearch.config.AiSearchProperties;
 import com.example.aisearch.service.search.categoryboost.api.CategoryBoostRules;
 import com.example.aisearch.service.search.categoryboost.api.CategoryBoostRulesReloader;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -26,14 +27,14 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * category_boosting.json 기반 룰 저장소 구현체.
+ * category_boost.json 기반 룰 저장소 구현체.
  * 조회 계약(CategoryBoostRules)과 재로딩 계약(CategoryBoostRulesReloader)을 함께 제공한다.
  */
 @Component
 public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoostRulesReloader {
 
     private static final Logger log = LoggerFactory.getLogger(JsonCategoryBoostRules.class);
-    private static final String RULE_FILE_PATH = "classpath:data/category_boosting.json";
+    private static final String RULE_FILE_PATH = "classpath:data/category_boost.json";
     private static final String VERSION_CHECK_GATE_KEY = "version-check-gate";
 
     private final ResourceLoader resourceLoader;
@@ -44,7 +45,7 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
     private final AtomicReference<CategoryBoostCacheEntry> currentEntry;
 
     // 스프링 빈 생성용 기본 생성자:
-    // 운영 기본 룰 경로(classpath:data/category_boosting.json)와
+    // 운영 기본 룰 경로(classpath:data/category_boost.json)와
     // application.yaml의 TTL 설정값(category-boost-cache-ttl-seconds)을 사용한다.
     @Autowired
     public JsonCategoryBoostRules(
@@ -156,11 +157,9 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
     private CategoryBoostCacheEntry loadAll(String path) throws IOException {
         Resource resource = resourceLoader.getResource(path);
         try (InputStream inputStream = resource.getInputStream()) {
-            CategoryBoostingConfig config = objectMapper.readValue(inputStream, CategoryBoostingConfig.class);
-            if (config == null || config.version() == null || config.version().isBlank()) {
-                throw new IllegalStateException("category_boosting.json version 값이 유효하지 않습니다. path=" + path);
-            }
-            return new CategoryBoostCacheEntry(config.version().trim(), toRuleMap(config.rules()));
+            JsonNode root = objectMapper.readTree(inputStream);
+            ParsedCategoryBoostConfig parsed = parseConfig(root, path);
+            return new CategoryBoostCacheEntry(parsed.version(), toRuleMap(parsed.rules()));
         }
     }
 
@@ -168,12 +167,7 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
         Resource resource = resourceLoader.getResource(path);
         try (InputStream inputStream = resource.getInputStream()) {
             JsonNode root = objectMapper.readTree(inputStream);
-            JsonNode versionNode = root == null ? null : root.get("version");
-            String version = versionNode == null ? "" : versionNode.asText("");
-            if (version.isBlank()) {
-                throw new IllegalStateException("category_boosting.json version 값이 비어 있습니다. path=" + path);
-            }
-            return version.trim();
+            return parseConfig(root, path).version();
         }
     }
 
@@ -191,19 +185,40 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
                 continue;
             }
             // 유효한 keyword + boost 맵이 모두 있을 때만 룰로 채택한다.
-            Map<String, Double> boosts = normalizeBoostMap(rule.categoryBoostById());
+            Map<String, Double> boosts = normalizeBoostMap(rule.categoryBoostById(), rule.categoryId(), rule.score());
             if (boosts.isEmpty()) {
                 continue;
             }
-            ruleMap.put(keyword, boosts);
+            ruleMap.merge(keyword, boosts, JsonCategoryBoostRules::mergeBoostMaps);
         }
         return Map.copyOf(ruleMap);
     }
 
-    private Map<String, Double> normalizeBoostMap(Map<String, Double> raw) {
-        if (raw == null || raw.isEmpty()) {
+    private static Map<String, Double> mergeBoostMaps(Map<String, Double> left, Map<String, Double> right) {
+        Map<String, Double> merged = new LinkedHashMap<>(left);
+        merged.putAll(right);
+        return Map.copyOf(merged);
+    }
+
+    private Map<String, Double> normalizeBoostMap(
+            Map<String, Double> raw,
+            String categoryId,
+            Double score
+    ) {
+        if (raw != null && !raw.isEmpty()) {
+            return normalizeCategoryBoostById(raw);
+        }
+
+        if (categoryId == null || categoryId.isBlank() || score == null) {
             return Map.of();
         }
+
+        Map<String, Double> normalized = new LinkedHashMap<>();
+        normalized.put(categoryId.trim(), normalizeScore(score));
+        return Map.copyOf(normalized);
+    }
+
+    private Map<String, Double> normalizeCategoryBoostById(Map<String, Double> raw) {
         Map<String, Double> normalized = new LinkedHashMap<>();
         for (Map.Entry<String, Double> entry : raw.entrySet()) {
             String key = entry.getKey();
@@ -212,9 +227,46 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
                 continue;
             }
             // JSON 객체 키와 Painless params 맵 조회를 맞추기 위해 카테고리 ID를 문자열 키로 유지한다.
-            normalized.put(key.trim(), value);
+            normalized.put(key.trim(), normalizeScore(value));
         }
         return Map.copyOf(normalized);
+    }
+
+    private double normalizeScore(Double rawScore) {
+        if (rawScore == null) {
+            throw new IllegalArgumentException("카테고리 부스팅 score 값이 비어 있습니다.");
+        }
+        // 운영 파일(category_boost.json)은 3/7/9 정수 스케일을 사용하므로 0.x 계수로 정규화한다.
+        return rawScore > 1.0 ? rawScore / 10.0 : rawScore;
+    }
+
+    private ParsedCategoryBoostConfig parseConfig(JsonNode root, String path) {
+        if (root == null || root.isNull()) {
+            throw new IllegalStateException("category_boost.json 내용이 비어 있습니다. path=" + path);
+        }
+
+        if (root.isArray()) {
+            List<CategoryBoostingRule> rules = objectMapper.convertValue(
+                    root,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, CategoryBoostingRule.class)
+            );
+            return new ParsedCategoryBoostConfig(buildArrayVersion(root), rules);
+        }
+
+        if (root.isObject()) {
+            CategoryBoostingConfig config = objectMapper.convertValue(root, CategoryBoostingConfig.class);
+            if (config == null || config.version() == null || config.version().isBlank()) {
+                throw new IllegalStateException("category_boost.json version 값이 유효하지 않습니다. path=" + path);
+            }
+            return new ParsedCategoryBoostConfig(config.version().trim(), config.rules());
+        }
+
+        throw new IllegalStateException("category_boost.json 형식이 올바르지 않습니다. path=" + path);
+    }
+
+    private String buildArrayVersion(JsonNode root) {
+        // 운영 파일은 version 필드가 없으므로 내용 기반 fingerprint로 변경 감지를 수행한다.
+        return Integer.toHexString(root.toString().hashCode());
     }
 
     private String currentRulePath() {
@@ -235,7 +287,17 @@ public class JsonCategoryBoostRules implements CategoryBoostRules, CategoryBoost
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record CategoryBoostingRule(
             String keyword,
-            Map<String, Double> categoryBoostById
+            Map<String, Double> categoryBoostById,
+            @JsonProperty("category_id")
+            String categoryId,
+            @JsonProperty("score")
+            Double score
+    ) {
+    }
+
+    private record ParsedCategoryBoostConfig(
+            String version,
+            List<CategoryBoostingRule> rules
     ) {
     }
 

@@ -120,7 +120,7 @@ class CategoryBoostingTest extends TruststoreTestBase {
     private long countCategoryInTopN(List<SearchHitResult> results, int topN, int expectedCategoryId) {
         return results.stream()
                 .limit(topN)
-                .map(hit -> asInteger(hit.source(), "categoryId"))
+                .map(hit -> asInteger(hit.source(), "lev3_category_id"))
                 .filter(categoryId -> categoryId != null && categoryId == expectedCategoryId)
                 .count();
     }

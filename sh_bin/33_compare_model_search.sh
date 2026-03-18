@@ -7,9 +7,8 @@ PAGE="${PAGE:-1}"
 
 MODELS=(
   "e5-small-ko-v2:8091"
-  "e5-small-ko:8092"
-  "minilm-l12:8093"
-  "minilm-l6:8094"
+  "kure-v1:8093"
+  "bge-m3:8095"
 )
 
 urlencode() {
@@ -47,9 +46,9 @@ for idx, item in enumerate(results[:5], start=1):
     source = item.get("source", {})
     print(
         f"  {idx}. score={item.get('score')} "
-        f"name={source.get('product_name')} "
-        f"category={source.get('category')} "
-        f"price={source.get('price')}"
+        f"name={source.get('goods_name')} "
+        f"category={source.get('lev3_category_id_name')} "
+        f"price={source.get('sale_price')}"
     )
 if not results:
     print("  (no results)")

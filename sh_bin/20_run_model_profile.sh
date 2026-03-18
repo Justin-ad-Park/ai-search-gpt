@@ -57,6 +57,7 @@ ensure_java_21() {
 
 MODE="${1:-web}"
 MODEL_KEY="${2:-e5-small-ko-v2}"
+OPTIONAL_PROFILE="${OPTIONAL_PROFILE:-}"
 
 case "${MODE}" in
   web)
@@ -70,7 +71,7 @@ case "${MODE}" in
     ;;
   *)
     echo "[ERROR] unsupported mode: ${MODE}"
-    echo "[USAGE] ./sh_bin/20_run_model_profile.sh <web|indexing|indexing-web> <e5-small-ko-v2|e5-small-ko|minilm-l12|minilm-l6>"
+    echo "[USAGE] ./sh_bin/20_run_model_profile.sh <web|indexing|indexing-web> <e5-small-ko-v2|e5-small-ko|kure-v1|koe5|bge-m3>"
     exit 1
     ;;
 esac
@@ -84,17 +85,21 @@ case "${MODEL_KEY}" in
     PROFILE="model-e5-small-ko"
     DEFAULT_PORT=8092
     ;;
-  minilm-l12)
-    PROFILE="model-minilm-l12"
+  kure-v1)
+    PROFILE="model-kure-v1"
     DEFAULT_PORT=8093
     ;;
-  minilm-l6)
-    PROFILE="model-minilm-l6"
+  koe5)
+    PROFILE="model-koe5"
     DEFAULT_PORT=8094
+    ;;
+  bge-m3)
+    PROFILE="model-bge-m3"
+    DEFAULT_PORT=8095
     ;;
   *)
     echo "[ERROR] unsupported model key: ${MODEL_KEY}"
-    echo "[USAGE] ./sh_bin/20_run_model_profile.sh <web|indexing|indexing-web> <e5-small-ko-v2|e5-small-ko|minilm-l12|minilm-l6>"
+    echo "[USAGE] ./sh_bin/20_run_model_profile.sh <web|indexing|indexing-web> <e5-small-ko-v2|e5-small-ko|kure-v1|koe5|bge-m3>"
     exit 1
     ;;
 esac
@@ -113,6 +118,9 @@ if [ "${MODE}" != "web" ] && [ ! -f "${TRUSTSTORE_PATH}" ]; then
 fi
 
 ACTIVE_PROFILES="${PROFILE}${EXTRA_PROFILE}"
+if [ -n "${OPTIONAL_PROFILE}" ]; then
+  ACTIVE_PROFILES="${ACTIVE_PROFILES},${OPTIONAL_PROFILE}"
+fi
 SERVER_PORT="${SERVER_PORT:-${DEFAULT_PORT}}"
 
 echo "[INFO] mode=${MODE}"

@@ -114,7 +114,7 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
     private void assertContainsProductName(JsonNode results, String expectedNameKeyword) {
         boolean containsExpectedProduct = false;
         for (JsonNode hit : results) {
-            String name = hit.path("source").path("product_name").asText("");
+            String name = hit.path("source").path("goods_name").asText("");
             if (name.contains(expectedNameKeyword)) {
                 containsExpectedProduct = true;
                 break;
@@ -138,8 +138,8 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
                         + ", score=" + hitView.hit().path("score").asDouble()
                         + ", id=" + hitView.hit().path("id").asText()
                         + ", name=" + hitView.productName()
-                        + ", category=" + hitView.source().path("category").asText()
-                        + ", price=" + hitView.source().path("price").asText()))
+                        + ", category=" + hitView.source().path("lev3_category_id_name").asText()
+                        + ", price=" + hitView.source().path("sale_price").asText()))
                 .count();
 
         if (printed == 0) {
@@ -166,7 +166,7 @@ class SynonymsRestClientIntegrationTest extends TruststoreTestBase {
         }
 
         String productName() {
-            return source().path("product_name").asText("");
+            return source().path("goods_name").asText("");
         }
     }
 }

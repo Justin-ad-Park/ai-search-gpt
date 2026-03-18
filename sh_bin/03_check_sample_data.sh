@@ -12,7 +12,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-path = Path('src/main/resources/data/food-products.json')
+path = Path('src/main/resources/data/goods_template.json')
 arr = json.loads(path.read_text(encoding='utf-8'))
 print(f"[DATA] file={path}")
 print(f"[DATA] count={len(arr)}")

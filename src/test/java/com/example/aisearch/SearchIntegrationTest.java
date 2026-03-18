@@ -77,8 +77,8 @@ class SearchIntegrationTest extends TruststoreTestBase {
                 "rank=?, score=%s, id=%s, name=%s, category=%s%n",
                 hit.score(),
                 hit.id(),
-                hit.source().get("product_name"),
-                hit.source().get("category")
+                hit.source().get("goods_name"),
+                hit.source().get("lev3_category_id_name")
         ));
 
         Assertions.assertTrue(results.isEmpty(), "MIN_SCORE_THRESHOLD 이하이면 검색 결과가 없어야 합니다.");
@@ -105,8 +105,8 @@ class SearchIntegrationTest extends TruststoreTestBase {
                 System.out.println("rank=" + (i + 1)
                         + ", score=" + hit.score()
                         + ", id=" + hit.id()
-                        + ", name=" + hit.source().get("product_name")
-                        + ", category=" + hit.source().get("category"));
+                        + ", name=" + hit.source().get("goods_name")
+                        + ", category=" + hit.source().get("lev3_category_id_name"));
             }
         }
     }
@@ -121,16 +121,16 @@ class SearchIntegrationTest extends TruststoreTestBase {
         results.forEach(hit -> System.out.printf(
                 "id=%s, name=%s, categoryId=%s, price=%s%n",
                 hit.id(),
-                hit.source().get("product_name"),
-                hit.source().get("categoryId"),
-                hit.source().get("price")
+                hit.source().get("goods_name"),
+                hit.source().get("lev3_category_id"),
+                hit.source().get("sale_price")
         ));
 
         Assertions.assertFalse(results.isEmpty(), "카테고리 필터 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer categoryId = asInteger(hit.source(), "categoryId");
+            Integer categoryId = asInteger(hit.source(), "lev3_category_id");
             return categoryId != null && List.of(1, 2, 3).contains(categoryId);
-        }), "모든 결과의 categoryId는 1,2,3 중 하나여야 합니다.");
+        }), "모든 결과의 lev3_category_id는 1,2,3 중 하나여야 합니다.");
     }
 
     @Test
@@ -144,16 +144,16 @@ class SearchIntegrationTest extends TruststoreTestBase {
         results.forEach(hit -> System.out.printf(
                 "id=%s, name=%s, categoryId=%s, price=%s%n",
                 hit.id(),
-                hit.source().get("product_name"),
-                hit.source().get("categoryId"),
-                hit.source().get("price")
+                hit.source().get("goods_name"),
+                hit.source().get("lev3_category_id"),
+                hit.source().get("sale_price")
         ));
 
         Assertions.assertFalse(results.isEmpty(), "가격 범위 필터 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer priceValue = asInteger(hit.source(), "price");
+            Integer priceValue = asInteger(hit.source(), "sale_price");
             return priceValue != null && priceValue >= 5000 && priceValue <= 15000;
-        }), "모든 결과의 price는 5000~15000 범위여야 합니다.");
+        }), "모든 결과의 sale_price는 5000~15000 범위여야 합니다.");
     }
 
     @Test
@@ -172,15 +172,15 @@ class SearchIntegrationTest extends TruststoreTestBase {
                 "id=%s, score=%s, name=%s, categoryId=%s, price=%s%n",
                 hit.id(),
                 hit.score(),
-                hit.source().get("product_name"),
-                hit.source().get("categoryId"),
-                hit.source().get("price")
+                hit.source().get("goods_name"),
+                hit.source().get("lev3_category_id"),
+                hit.source().get("sale_price")
         ));
 
         Assertions.assertFalse(results.isEmpty(), "복합 조건 결과는 비어있으면 안 됩니다.");
         Assertions.assertTrue(results.stream().allMatch(hit -> {
-            Integer categoryId = asInteger(hit.source(), "categoryId");
-            Integer priceValue = asInteger(hit.source(), "price");
+            Integer categoryId = asInteger(hit.source(), "lev3_category_id");
+            Integer priceValue = asInteger(hit.source(), "sale_price");
             return categoryId != null
                     && categoryId == 1
                     && priceValue != null
@@ -296,8 +296,8 @@ class SearchIntegrationTest extends TruststoreTestBase {
                 "rank=?, score=%s, id=%s, name=%s, category=%s%n",
                 hit.score(),
                 hit.id(),
-                hit.source().get("product_name"),
-                hit.source().get("category")
+                hit.source().get("goods_name"),
+                hit.source().get("lev3_category_id_name")
         ));
 
         Assertions.assertFalse(results.isEmpty(), "조사 포함 쿼리에서도 검색 결과가 있어야 합니다.");
@@ -320,19 +320,19 @@ class SearchIntegrationTest extends TruststoreTestBase {
             System.out.println("rank=" + (i + 1)
                     + ", score=" + hit.score()
                     + ", id=" + hit.id()
-                    + ", name=" + hit.source().get("product_name")
-                    + ", category=" + hit.source().get("category"));
+                    + ", name=" + hit.source().get("goods_name")
+                    + ", category=" + hit.source().get("lev3_category_id_name"));
         }
 
         Assertions.assertFalse(results.isEmpty(), "검색 결과가 비어있으면 안됩니다.");
         results.forEach(hit -> System.out.printf(
                 "[CATEGORY_CHECK] category=%s, name=%s, score=%s%n",
-                hit.source().get("category"),
-                hit.source().get("product_name"),
+                hit.source().get("lev3_category_id_name"),
+                hit.source().get("goods_name"),
                 hit.score()
         ));
         boolean containsExpectedCategory = results.stream()
-                .map(hit -> (String) hit.source().get("category"))
+                .map(hit -> (String) hit.source().get("lev3_category_id_name"))
                 .anyMatch(category -> containsAnyKeyword(category, expectedCategoryKeywords));
         Assertions.assertTrue(containsExpectedCategory, "상위 결과에 기대 카테고리가 포함되어야 합니다.");
     }
@@ -376,7 +376,7 @@ class SearchIntegrationTest extends TruststoreTestBase {
 
     private List<Integer> extractPrices(List<SearchHitResult> results) {
         return results.stream()
-                .map(hit -> asInteger(hit.source(), "price"))
+                .map(hit -> asInteger(hit.source(), "sale_price"))
                 .filter(value -> value != null)
                 .toList();
     }

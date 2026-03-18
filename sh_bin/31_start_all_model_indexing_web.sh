@@ -9,9 +9,8 @@ ALIAS_WAIT_SECONDS="${ALIAS_WAIT_SECONDS:-240}"
 
 MODELS=(
   "e5-small-ko-v2"
-  "e5-small-ko"
-  "minilm-l12"
-  "minilm-l6"
+  "kure-v1"
+  "bge-m3"
 )
 
 mkdir -p "${LOG_DIR}" "${PID_DIR}"
@@ -19,9 +18,8 @@ mkdir -p "${LOG_DIR}" "${PID_DIR}"
 alias_for_model() {
   case "$1" in
     e5-small-ko-v2) echo "food-products-e5-small-ko-v2-read" ;;
-    e5-small-ko) echo "food-products-e5-small-ko-read" ;;
-    minilm-l12) echo "food-products-minilm-l12-read" ;;
-    minilm-l6) echo "food-products-minilm-l6-read" ;;
+    kure-v1) echo "food-products-kure-v1-read" ;;
+    bge-m3) echo "food-products-bge-m3-read" ;;
     *) return 1 ;;
   esac
 }
@@ -72,13 +70,13 @@ for model in "${MODELS[@]}"; do
   pid_file="${PID_DIR}/${model}.pid"
   alias_name="$(alias_for_model "${model}")"
 
-  echo "[INFO] starting indexing-web for ${model}"
-  "${SCRIPT_DIR}/22_run_model_indexing_web.sh" "${model}" > "${log_file}" 2>&1 &
+  echo "[INFO] starting vector-only indexing-web for ${model}"
+  OPTIONAL_PROFILE="search-vector-only" "${SCRIPT_DIR}/22_run_model_indexing_web.sh" "${model}" > "${log_file}" 2>&1 &
   echo $! > "${pid_file}"
   echo "[INFO] ${model} pid=$(cat "${pid_file}") log=${log_file}"
   echo "[INFO] waiting for alias ${alias_name}"
   wait_for_alias "${model}" "${alias_name}" "${log_file}"
 done
 
-echo "[OK] all model indexing-web processes started"
+echo "[OK] all model indexing-web processes started (search-vector-only)"
 echo "[NOTE] indexing runs against each model profile and creates model-specific index/alias if missing"

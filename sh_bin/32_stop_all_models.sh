@@ -5,17 +5,15 @@ PID_DIR="${PID_DIR:-/tmp/ai-search-model-pids}"
 
 MODELS=(
   "e5-small-ko-v2"
-  "e5-small-ko"
-  "minilm-l12"
-  "minilm-l6"
+  "kure-v1"
+  "bge-m3"
 )
 
 port_for_model() {
   case "$1" in
     e5-small-ko-v2) echo "8091" ;;
-    e5-small-ko) echo "8092" ;;
-    minilm-l12) echo "8093" ;;
-    minilm-l6) echo "8094" ;;
+    kure-v1) echo "8093" ;;
+    bge-m3) echo "8095" ;;
     *) return 1 ;;
   esac
 }
