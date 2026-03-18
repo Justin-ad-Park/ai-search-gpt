@@ -1,7 +1,7 @@
 package com.example.aisearch;
 
-import com.example.aisearch.service.indexing.orchestration.IndexRolloutResult;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
+import com.example.aisearch.service.indexing.orchestration.result.IndexRolloutResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;

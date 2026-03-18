@@ -4,6 +4,7 @@ import com.example.aisearch.service.indexing.bootstrap.ingest.ProductIndexingSer
 import com.example.aisearch.service.indexing.domain.AliasSwitcher;
 import com.example.aisearch.service.indexing.domain.IndexCleanupService;
 import com.example.aisearch.service.indexing.domain.IndexCreator;
+import com.example.aisearch.service.indexing.orchestration.result.IndexRolloutResult;
 import org.springframework.stereotype.Service;
 
 /**

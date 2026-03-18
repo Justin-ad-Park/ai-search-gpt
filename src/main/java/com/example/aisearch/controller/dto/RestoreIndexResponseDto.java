@@ -1,6 +1,6 @@
 package com.example.aisearch.controller.dto;
 
-import com.example.aisearch.service.indexing.orchestration.RestoreIndexResult;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexResult;
 
 public record RestoreIndexResponseDto(
         boolean success,

@@ -1,6 +1,6 @@
 package com.example.aisearch.controller.dto;
 
-import com.example.aisearch.service.indexing.orchestration.RestoreIndexCandidate;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexCandidate;
 
 public record RestoreIndexCandidateDto(
         String indexName,

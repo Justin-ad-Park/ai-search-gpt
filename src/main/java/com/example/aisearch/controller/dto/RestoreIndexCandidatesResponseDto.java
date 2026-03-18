@@ -1,6 +1,6 @@
 package com.example.aisearch.controller.dto;
 
-import com.example.aisearch.service.indexing.orchestration.RestoreIndexCandidatesResult;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexCandidatesResult;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.example.aisearch.service.indexing.orchestration;
+package com.example.aisearch.service.indexing.orchestration.result;
 
 public record RestoreIndexResult(
         boolean success,

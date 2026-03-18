@@ -5,6 +5,9 @@ import com.example.aisearch.service.indexing.domain.AliasSwitcher;
 import com.example.aisearch.service.indexing.domain.VersionedIndexLocator;
 import com.example.aisearch.service.indexing.orchestration.exception.InvalidRestoreTargetException;
 import com.example.aisearch.service.indexing.orchestration.exception.RestoreTargetNotFoundException;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexCandidate;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexCandidatesResult;
+import com.example.aisearch.service.indexing.orchestration.result.RestoreIndexResult;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
