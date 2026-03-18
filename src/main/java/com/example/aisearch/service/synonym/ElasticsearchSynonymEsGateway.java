@@ -98,6 +98,22 @@ public class ElasticsearchSynonymEsGateway implements SynonymEsGateway {
 
     private boolean isNotFound(Exception e) {
         String message = e.getMessage();
-        return message != null && message.contains("status: 404");
+        if (message != null && (message.contains("status: 404") || message.contains("[404]") || message.contains("404 Not Found"))) {
+            return true;
+        }
+
+        Throwable current = e;
+        while (current != null) {
+            String currentMessage = current.getMessage();
+            if (currentMessage != null
+                    && (currentMessage.contains("status: 404")
+                    || currentMessage.contains("[404]")
+                    || currentMessage.contains("404 Not Found")
+                    || currentMessage.contains("resource_not_found_exception"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
