@@ -14,6 +14,7 @@ ai-search:
   ## **  embedding-model-path 우선 적용하며, 없으면 model-url 사용함  **
   embedding-model-path: ${AI_SEARCH_EMBED_MODEL_PATH:classpath:/model/${ai-search.model-path-segment}}
   embedding-model-url: ${AI_SEARCH_EMBED_MODEL:djl://ai.djl.huggingface.pytorch/multilingual-e5-small-ko-v2}
+  sample-data-path: ${AI_SEARCH_SAMPLE_DATA_PATH:classpath:data/goods_template_test_210.json}
   min-score-threshold: ${AI_SEARCH_MIN_SCORE:0.71}
   index-retention-count: ${AI_SEARCH_INDEX_RETENTION_COUNT:3}
   category-boost-cache-ttl-seconds: ${AI_SEARCH_CATEGORY_BOOST_CACHE_TTL_SECONDS:300}

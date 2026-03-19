@@ -1,4 +1,4 @@
-package com.example.aisearch;
+package com.example.aisearch.integration.helper;
 
 public abstract class TruststoreTestBase {
 

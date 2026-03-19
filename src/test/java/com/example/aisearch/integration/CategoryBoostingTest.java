@@ -1,12 +1,13 @@
-package com.example.aisearch;
+package com.example.aisearch.integration;
 
+import com.example.aisearch.integration.helper.ElasticsearchIntegrationTestBase;
+import com.example.aisearch.integration.helper.SearchResultTestSupport;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.ProductSearchRequest;
 import com.example.aisearch.model.search.SearchSortOption;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.search.categoryboost.policy.CategoryBoostBetaTuner;
 import com.example.aisearch.service.search.ProductSearchService;
-import com.example.aisearch.support.RequiresElasticsearch;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;

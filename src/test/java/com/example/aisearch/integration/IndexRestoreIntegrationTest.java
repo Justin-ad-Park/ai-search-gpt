@@ -1,5 +1,7 @@
-package com.example.aisearch;
+package com.example.aisearch.integration;
 
+import com.example.aisearch.integration.helper.RestApiIntegrationTestBase;
+import com.example.aisearch.integration.helper.SearchResultTestSupport;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.indexing.orchestration.result.IndexRolloutResult;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import java.net.URLEncoder;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 

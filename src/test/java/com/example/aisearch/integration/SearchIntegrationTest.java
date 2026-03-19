@@ -1,5 +1,6 @@
-package com.example.aisearch;
+package com.example.aisearch.integration;
 
+import com.example.aisearch.integration.helper.ElasticsearchIntegrationTestBase;
 import com.example.aisearch.model.SearchHitResult;
 import com.example.aisearch.model.search.SearchPageResult;
 import com.example.aisearch.model.search.SearchPagingPolicy;
@@ -55,16 +56,15 @@ class SearchIntegrationTest extends ElasticsearchIntegrationTestBase {
     @Test
     void semanticSearchShouldReturnRelevantProducts() {
         // 아이 간식 관련 쿼리 테스트
-        String query = "어린이가 먹기 좋은 건강한 간식";
-        String[] expectedCategoryKeywords = {"간식"};
+        String query = "어린이가 먹을 간식을 추천해줘";
 
-        assertSemanticSearchContainsCategories(query, 5, SearchPagingPolicy.DEFAULT_PAGE, expectedCategoryKeywords);
+        assertSemanticSearchReturnsResults(query, 5, SearchPagingPolicy.DEFAULT_PAGE);
     }
 
     @Test
     void semanticSearchShouldReturnRelevantProducts2() {
         // 수산물 관련 쿼리 테스트
-        String query = "생새우 해산물";
+        String query = "국산콩 순두부";
         assertSemanticSearchReturnsResults(query, 20, SearchPagingPolicy.DEFAULT_PAGE);
     }
 

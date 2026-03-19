@@ -1,4 +1,4 @@
-package com.example.aisearch;
+package com.example.aisearch.integration.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

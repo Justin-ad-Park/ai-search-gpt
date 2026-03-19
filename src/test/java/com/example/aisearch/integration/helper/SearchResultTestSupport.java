@@ -1,4 +1,4 @@
-package com.example.aisearch;
+package com.example.aisearch.integration.helper;
 
 import com.example.aisearch.model.SearchHitResult;
 import com.fasterxml.jackson.databind.JsonNode;

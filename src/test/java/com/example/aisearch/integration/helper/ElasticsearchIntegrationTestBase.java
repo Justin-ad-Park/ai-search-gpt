@@ -1,4 +1,4 @@
-package com.example.aisearch;
+package com.example.aisearch.integration.helper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.example.aisearch.config.AiSearchProperties;

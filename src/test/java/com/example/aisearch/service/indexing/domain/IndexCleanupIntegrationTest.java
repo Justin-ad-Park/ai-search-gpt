@@ -1,6 +1,6 @@
 package com.example.aisearch.service.indexing.domain;
 
-import com.example.aisearch.ElasticsearchIntegrationTestBase;
+import com.example.aisearch.integration.helper.ElasticsearchIntegrationTestBase;
 import com.example.aisearch.service.indexing.orchestration.IndexRolloutService;
 import com.example.aisearch.service.indexing.orchestration.result.IndexRolloutResult;
 import org.junit.jupiter.api.BeforeEach;
