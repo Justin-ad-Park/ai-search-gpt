@@ -4,5 +4,6 @@ build/
 target/
 *.log
 .DS_Store
+**/.DS_Store
 src/main/resources/model/**/*.pt
 src/main/resources/model/**/*.json

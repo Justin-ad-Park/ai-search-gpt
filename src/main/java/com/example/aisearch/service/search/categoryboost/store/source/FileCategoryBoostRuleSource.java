@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * classpath/file 리소스에 저장된 category_boosting.json을 읽는 구현체입니다.
+ * classpath/file 리소스에 저장된 category_boost.json을 읽는 구현체입니다.
  *
  * 책임:
  * - 파일 열기
