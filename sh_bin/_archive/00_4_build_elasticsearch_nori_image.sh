@@ -31,7 +31,7 @@ if [ ! -f "${SCRIPT_DIR}/${PLUGIN_ZIP}" ]; then
     echo "       ${SCRIPT_DIR}/${PLUGIN_ZIP}"
     echo "       url: ${PLUGIN_URL}"
     echo "[HINT] If your environment uses a private CA/proxy, try:"
-    echo "       CURL_INSECURE=true ./sh_bin/00_3_build_elasticsearch_nori_image.sh"
+    echo "       CURL_INSECURE=true ./sh_bin/00_4_build_elasticsearch_nori_image.sh"
     exit 1
   fi
 else
@@ -48,4 +48,4 @@ docker build --build-arg ES_VERSION="${ES_VERSION}" -f "${DOCKERFILE_PATH}" -t "
 set +x
 
 echo "[OK] Built image: ${ES_CUSTOM_IMAGE}"
-echo "[NEXT] Push it if needed: ./sh_bin/00_4_push_elasticsearch_nori_image.sh"
+echo "[NEXT] Push it if needed: ./sh_bin/00_5_push_elasticsearch_nori_image.sh"

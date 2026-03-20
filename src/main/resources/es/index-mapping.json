@@ -31,6 +31,10 @@
             "XSV"
           ]
         },
+        "ko_stop_filter": {
+          "type": "stop",
+          "stopwords_path": "userdict/stopword.txt"
+        },
         "ko_synonym_filter": {
           "type": "synonym_graph",
           "synonyms_set": "__SYNONYMS_SET_ID__",
@@ -41,12 +45,12 @@
         "ko_mall_analyzer": {
           "type": "custom",
           "tokenizer": "ko_nori_userdict_tokenizer",
-          "filter": ["lowercase", "ko_pos_filter"]
+          "filter": ["lowercase", "ko_stop_filter", "ko_pos_filter"]
         },
         "ko_mall_search_analyzer": {
           "type": "custom",
           "tokenizer": "ko_nori_userdict_tokenizer",
-          "filter": ["lowercase", "ko_synonym_filter", "ko_pos_filter"]
+          "filter": ["lowercase", "ko_stop_filter", "ko_synonym_filter", "ko_pos_filter"]
         }
       }
     }

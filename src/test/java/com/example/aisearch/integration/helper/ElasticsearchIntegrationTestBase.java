@@ -50,4 +50,16 @@ public abstract class ElasticsearchIntegrationTestBase extends TruststoreTestBas
     protected boolean indexExists(String indexName) throws IOException {
         return esClient.indices().exists(e -> e.index(indexName)).value();
     }
+
+    protected List<String> analyzeTokens(String analyzer, String text) throws IOException {
+        return esClient.indices()
+                .analyze(request -> request
+                        .index(properties.readAlias())
+                        .analyzer(analyzer)
+                        .text(text))
+                .tokens()
+                .stream()
+                .map(token -> token.token())
+                .toList();
+    }
 }

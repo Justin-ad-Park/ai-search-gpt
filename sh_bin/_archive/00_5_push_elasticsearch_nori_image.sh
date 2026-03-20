@@ -46,7 +46,7 @@ fi
 
 if ! docker image inspect "${SOURCE_IMAGE}" >/dev/null 2>&1; then
   echo "[INFO] 소스 이미지를 찾을 수 없습니다: ${SOURCE_IMAGE}"
-  echo "[INFO] push 단계를 건너뜁니다. 필요하면 먼저 빌드하세요: ./sh_bin/00_3_build_elasticsearch_nori_image.sh"
+  echo "[INFO] push 단계를 건너뜁니다. 필요하면 먼저 빌드하세요: ./sh_bin/00_4_build_elasticsearch_nori_image.sh"
   exit 0
 fi
 

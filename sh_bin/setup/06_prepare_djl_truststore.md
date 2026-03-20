@@ -1,6 +1,6 @@
-# 10_1_prepare_djl_truststore.sh 설명서 (초보 개발자용)
+# 06_prepare_djl_truststore.sh 설명서 (초보 개발자용)
 
-이 문서는 `10_1_prepare_djl_truststore.sh`가 **무엇을 하는 스크립트인지**를
+이 문서는 `06_prepare_djl_truststore.sh`가 **무엇을 하는 스크립트인지**를
 처음 보는 개발자도 이해할 수 있게 순서대로 설명합니다.
 
 ---
@@ -241,9 +241,9 @@ keytool -importcert -noprompt \
 2. 로그에서 호스트별 등록 개수 확인
    - `djl.ai certificates imported: ...`
 3. truststore 내부 항목 확인(선택)
-   - `./sh_bin/10_2_check_djl_truststore.sh`
+   - `./sh_bin/check/04_check_djl_truststore.sh`
 4. 테스트 실행
-   - `./sh_bin/04_run_vector_search_test_local.sh`
+   - `./gradlew test --tests com.example.aisearch.integration.SearchIntegrationTest`
 
 ---
 

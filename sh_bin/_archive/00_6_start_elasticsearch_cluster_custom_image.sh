@@ -45,4 +45,4 @@ done
 set +x
 
 echo "[OK] Elasticsearch(custom image) is ready"
-echo "[NEXT] Verify plugin: ./sh_bin/00_9_check_elasticsearch_nori_plugin.sh"
+echo "[NEXT] Verify plugin: ./sh_bin/00_7_check_elasticsearch_nori_plugin.sh"

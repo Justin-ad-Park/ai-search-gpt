@@ -10,14 +10,15 @@
 - 데이터: `src/main/resources/data/goods_template.json`
 
 ## 빠른 시작
-1. `./sh_bin/00_2_install_eck_operator.sh` (1회성)
-2. `./sh_bin/00_3_build_elasticsearch_nori_image.sh` (1회성)
-3. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/00_4_push_elasticsearch_nori_image.sh` (선택)
-4. `./sh_bin/00_6_start_elasticsearch_cluster_custom_image.sh`
-5. `./sh_bin/10_1_prepare_djl_truststore.sh` (1회성)
-6. `./sh_bin/01_check_elasticsearch_status.sh`
-7. `./sh_bin/02_generate_sample_data.sh`
-8. `./sh_bin/04_run_vector_search_test_local.sh`
+1. `./sh_bin/setup/02_install_eck_operator.sh` (1회성)
+2. `./sh_bin/check/01_check_eck_operator_status.sh`
+3. `./sh_bin/setup/03_build_elasticsearch_nori_image.sh` (1회성)
+4. `ES_CUSTOM_IMAGE=<registry>/<repo>/ai-search-es:8.13.4-nori ./sh_bin/setup/04_push_elasticsearch_nori_image.sh` (선택)
+5. `./sh_bin/setup/05_start_elasticsearch_cluster_custom_image.sh`
+6. `./sh_bin/check/02_check_elasticsearch_nori_plugin.sh`
+7. `./sh_bin/setup/06_prepare_djl_truststore.sh` (1회성)
+8. `./sh_bin/check/03_check_elasticsearch_status.sh`
+9. `./gradlew test --tests com.example.aisearch.integration.SearchIntegrationTest`
 
 상세 절차는 `sh_bin/readme.md` 참고.
 
@@ -47,15 +48,15 @@
 - 예: `./gradlew bootRun --args='--spring.profiles.active=model-kure-v1,search-vector-only,indexing-web'`
 
 모델 실행 스크립트도 사용할 수 있습니다.
-- 웹 실행: `./sh_bin/21_run_model_web.sh e5-small-ko-v2`
-- 색인 + 웹 실행: `./sh_bin/22_run_model_indexing_web.sh kure-v1`
-- 색인만 실행: `./sh_bin/23_run_model_indexing_only.sh bge-m3`
-- 전체 모델 비교 웹 실행(VectorOnlySearchStrategy): `./sh_bin/30_start_all_model_web.sh`
-- 전체 모델 색인 + 비교 웹 실행(VectorOnlySearchStrategy): `./sh_bin/31_start_all_model_indexing_web.sh`
-- 전체 모델 종료: `./sh_bin/32_stop_all_models.sh`
-- 모델 1개 쿼리 비교: `./sh_bin/33_compare_model_search.sh '어린이 간식'`
-- 대표 쿼리 일괄 비교: `./sh_bin/34_compare_model_search_queries.sh`
-- 모델 상태 확인: `./sh_bin/35_check_model_status.sh`
+- 웹 실행: `./sh_bin/model/02_run_model_web.sh e5-small-ko-v2`
+- 색인 + 웹 실행: `./sh_bin/model/03_run_model_indexing_web.sh kure-v1`
+- 색인만 실행: `./sh_bin/model/04_run_model_indexing_only.sh bge-m3`
+- 전체 모델 비교 웹 실행(VectorOnlySearchStrategy): `./sh_bin/model/05_start_all_model_web.sh`
+- 전체 모델 색인 + 비교 웹 실행(VectorOnlySearchStrategy): `./sh_bin/model/06_start_all_model_indexing_web.sh`
+- 전체 모델 종료: `./sh_bin/model/07_stop_all_models.sh`
+- 모델 1개 쿼리 비교: `./sh_bin/model/08_compare_model_search.sh '어린이 간식'`
+- 대표 쿼리 일괄 비교: `./sh_bin/model/09_compare_model_search_queries.sh`
+- 모델 상태 확인: `./sh_bin/check/05_check_model_status.sh`
 
 기획자 검토 가이드:
 - [docs/13.model-review-guide.md](/Users/davidnam/Project/pulmuone/ai-search-gpt/docs/13.model-review-guide.md)
